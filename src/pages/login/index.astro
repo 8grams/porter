@@ -1,0 +1,18 @@
+---
+import Layout from "../../layouts/Layout.astro";
+---
+
+<Layout pageTitle="Login">
+  <section class="h-screen flex items-center justify-center">
+    <div class="card w-full max-w-md shadow-xl bg-base-100">
+      <div class="card-body flex flex-col gap-6">
+        <h2 class="card-title justify-center text-2xl">Porter - Login</h2>
+        <form method="GET" action="/api/login/google">
+          <button class="btn btn-neutral w-full rounded-none" type="submit">
+            Login with Google
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+</Layout>

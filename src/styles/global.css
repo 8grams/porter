@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@fontsource-variable/plus-jakarta-sans";
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark, cupcake;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans Variable', sans-serif;
+}
+

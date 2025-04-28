@@ -1,0 +1,38 @@
+---
+import Layout from "../../../layouts/Layout.astro";
+---
+
+<Layout pageTitle="Login Admin">
+  <section class="h-screen flex items-center justify-center">
+    <div class="card w-full max-w-md shadow-xl bg-base-100">
+      <div class="card-body flex flex-col gap-6">
+        <h2 class="card-title justify-center">Porter - Login Admin</h2>
+        <form method="POST" class="flex flex-col gap-6">
+          <div class="flex flex-col gap-2">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              placeholder="Input your email"
+              class="input input-bordered w-full rounded-none"
+            />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Input your password"
+              class="input input-bordered w-full rounded-none"
+            />
+          </div>
+          <div class="card-actions justify-end">
+            <button class="btn btn-neutral w-full rounded-none" type="submit"
+              >Login</button
+            >
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</Layout>
