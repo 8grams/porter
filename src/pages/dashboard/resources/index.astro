@@ -1,0 +1,46 @@
+---
+import Dashboard from "../../../layouts/Dashboard.astro";
+---
+
+<Dashboard pageTitle="Resource">
+  <section
+    slot="content"
+    class="card bg-white w-full rounded-none py-12 px-12 shadow-sm"
+  >
+    <div class="flex justify-between items-center gap-4 flex-wrap">
+      <h2 class="text-xl font-semibold">Resource</h2>
+      <div class="flex items-center gap-4">
+        <label class="input rounded-none w-[220px]">
+          <svg
+            class="h-[1em] opacity-50"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+          >
+            <g
+              stroke-linejoin="round"
+              stroke-linecap="round"
+              stroke-width="2.5"
+              fill="none"
+              stroke="currentColor"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </g>
+          </svg>
+          <input type="search" class="grow" placeholder="Search" />
+        </label>
+        <label class="w-[160px]">
+          <select class="select w-full rounded-none">
+            <option disabled selected>All Types</option>
+            <option>Kubernetes</option>
+            <option>Google IAM</option>
+            <option>VM</option>
+          </select>
+        </label>
+        <button class="btn btn-neutral rounded-none w-[140px]">
+          + Create New
+        </button>
+      </div>
+    </div>
+  </section>
+</Dashboard>
