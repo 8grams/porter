@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { env } from "./../../../../../utils/env.js";
 
 export const GET: APIRoute = async ({ url, redirect }) => {
   const code = url.searchParams.get("code");
@@ -7,8 +8,8 @@ export const GET: APIRoute = async ({ url, redirect }) => {
     return new Response("No code found in callback.", { status: 400 });
   }
 
-  const clientId = import.meta.env.GOOGLE_CLIENT_ID!;
-  const clientSecret = import.meta.env.GOOGLE_CLIENT_SECRET!;
+  const clientId = env.GOOGLE_CLIENT_ID!;
+  const clientSecret = env.GOOGLE_CLIENT_SECRET!;
   const redirectUri = "http://localhost:4321/api/login/google/callback";
 
   const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {

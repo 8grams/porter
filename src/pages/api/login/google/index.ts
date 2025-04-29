@@ -1,7 +1,8 @@
 import type { APIRoute } from "astro";
+import { env } from "./../../../../utils/env.js";
 
 export const GET: APIRoute = async () => {
-  const clientId = import.meta.env.GOOGLE_CLIENT_ID;
+  const clientId = env.GOOGLE_CLIENT_ID;
   const redirectUri = "http://localhost:4321/api/login/google/callback";
   const scope = "openid email profile";
   const state = crypto.randomUUID();
