@@ -1,4 +1,5 @@
 ---
+import Forms from "../../components/Forms.astro";
 import Layout from "../../layouts/Layout.astro";
 ---
 
@@ -7,11 +8,11 @@ import Layout from "../../layouts/Layout.astro";
     <div class="card w-full max-w-md shadow-xl bg-base-100">
       <div class="card-body flex flex-col gap-6">
         <h2 class="card-title justify-center text-2xl">Porter - Login</h2>
-        <form method="GET" action="/api/login/google">
+        <Forms method="GET" action="/api/login/google">
           <button class="btn btn-neutral w-full rounded-none" type="submit">
             Login with Google
           </button>
-        </form>
+        </Forms>
       </div>
     </div>
   </section>
