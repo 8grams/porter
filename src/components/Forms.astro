@@ -1,7 +1,13 @@
 ---
-const { action = "#", method = "POST" } = Astro.props;
+type FormProps = {
+  action?: string;
+  method?: "GET" | "POST";
+  [key: string]: any;
+};
+
+const { action = "#", method = "POST", ...props } = Astro.props as FormProps;
 ---
 
-<form action={action} method={method} class="space-y-4">
+<form action={action} method={method} {...props} class="space-y-4">
   <slot />
 </form>

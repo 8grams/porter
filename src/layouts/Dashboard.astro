@@ -69,8 +69,6 @@ const { pageTitle } = Astro.props;
           @click.outside="open = false"
           x-cloak
         >
-          <li><a href="/dashboard/profile">Profile</a></li>
-          <li><a href="/dashboard/account">Account</a></li>
           <li><a href="/logout">Logout</a></li>
         </ul>
       </div>
@@ -80,3 +78,5 @@ const { pageTitle } = Astro.props;
     <slot name="content" />
   </main>
 </Layout>
+<slot name="dialog" />
+<slot name="script" />

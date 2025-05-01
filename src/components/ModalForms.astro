@@ -1,0 +1,231 @@
+---
+import Forms from "../components/Forms.astro";
+const { type, dialogId } = Astro.props;
+---
+
+<dialog slot="dialog" class="modal" id={dialogId}>
+  <div class="modal-box">
+    <Forms x-data="formHandler()" class="flex flex-col gap-6">
+      <h1
+        class="text-xl font-bold"
+        x-text="form.titles[category_name] || 'Create'"
+      >
+      </h1>
+      <label>
+        <select class="select rounded-none w-full" x-model="category_name">
+          <option disabled selected value="">Choose Services</option>
+          <option value="aws_key">Create AWS Key</option>
+          <option value="google_services_account"
+            >Create Google Services Account</option
+          >
+          <option value="ssh_private_key">Create SSH Private Key</option>
+          <option value="kubeconfig">Create Kubeconfig</option>
+          <option value="postgreSQL_access">Create PostgreSQL Access</option>
+          <option value="mySQL_access">Create MySQL Access</option>
+        </select>
+      </label>
+      <template x-if="category_name === 'aws_key'">
+        <div class="flex flex-col gap-6">
+          <label>
+            <input
+              type="text"
+              placeholder="Input Name"
+              class="input w-full rounded-none"
+              x-model="form.keys.aws_key.name"
+            />
+          </label>
+          <label>
+            <textarea
+              class="textarea w-full rounded-none"
+              x-model="form.keys.aws_key.key_id"
+              placeholder="Input Key Id"></textarea>
+          </label>
+          <label>
+            <textarea
+              class="textarea w-full rounded-none"
+              x-model="form.keys.aws_key.secret_key"
+              placeholder="Input Secret Key"></textarea>
+          </label>
+        </div>
+      </template>
+      <template x-if="category_name === 'google_services_account'">
+        <div class="flex flex-col gap-6">
+          <label>
+            <input
+              type="text"
+              placeholder="Input Name"
+              class="input w-full rounded-none"
+              x-model="form.keys.google_service_key.name"
+            />
+          </label>
+          <label>
+            <textarea
+              placeholder="Input Service Account Key"
+              class="textarea w-full rounded-none"
+              x-model="form.keys.google_service_key.service_account_key"
+            ></textarea>
+          </label>
+        </div>
+      </template>
+      <template x-if="category_name === 'ssh_private_key'">
+        <div class="flex flex-col gap-6">
+          <label>
+            <input
+              type="text"
+              placeholder="Input Name"
+              class="input w-full rounded-none"
+              x-model="form.keys.ssh_private_key.name"
+            />
+          </label>
+          <label>
+            <textarea
+              placeholder="Input SSH Private Key"
+              class="textarea w-full rounded-none"
+              x-model="form.keys.ssh_private_key.ssh_private_key"></textarea>
+          </label>
+        </div>
+      </template>
+      <template x-if="category_name === 'kubeconfig'">
+        <div class="flex flex-col gap-6">
+          <label>
+            <input
+              type="text"
+              placeholder="Input Name"
+              class="input w-full rounded-none"
+              x-model="form.keys.kubeconfig.name"
+            />
+          </label>
+          <label>
+            <textarea
+              placeholder="Input Kubeconfig"
+              class="textarea w-full rounded-none"
+              x-model="form.keys.kubeconfig.kubeconfig"></textarea>
+          </label>
+        </div>
+      </template>
+      <template x-if="category_name === 'postgreSQL_access'">
+        <div class="flex flex-col gap-6">
+          <label>
+            <input
+              type="text"
+              placeholder="Input Name"
+              class="input w-full rounded-none"
+              x-model="form.keys.postgreSQL_access.name"
+            />
+          </label>
+          <label>
+            <input
+              type="text"
+              placeholder="Input Host IP"
+              class="input w-full rounded-none"
+              x-model="form.keys.postgreSQL_access.host_ip"
+            />
+          </label>
+          <label>
+            <input
+              type="text"
+              placeholder="Input Username"
+              class="input w-full rounded-none"
+              x-model="form.keys.postgreSQL_access.username"
+            />
+          </label>
+          <label>
+            <input
+              type="password"
+              placeholder="Input Password"
+              class="input w-full rounded-none"
+              x-model="form.keys.postgreSQL_access.password"
+            />
+          </label>
+        </div>
+      </template>
+      <template x-if="category_name === 'mySQL_access'">
+        <div class="flex flex-col gap-6">
+          <label>
+            <input
+              type="text"
+              placeholder="Input Name"
+              class="input w-full rounded-none"
+              x-model="form.keys.mySQL_access.name"
+            />
+          </label>
+          <label>
+            <input
+              type="text"
+              placeholder="Input Host IP"
+              class="input w-full rounded-none"
+              x-model="form.keys.mySQL_access.host_ip"
+            />
+          </label>
+          <label>
+            <input
+              type="text"
+              placeholder="Input Username"
+              class="input w-full rounded-none"
+              x-model="form.keys.mySQL_access.username"
+            />
+          </label>
+          <label>
+            <input
+              type="password"
+              placeholder="Input Password"
+              class="input w-full rounded-none"
+              x-model="form.keys.mySQL_access.password"
+            />
+          </label>
+        </div>
+      </template>
+      <button type="submit" class="btn btn-neutral rounded-none w-full">
+        Save
+      </button>
+    </Forms>
+  </div>
+</dialog>
+<script slot="script" is:inline>
+  function formHandler() {
+    return {
+      category_name: "",
+      form: {
+        titles: {
+          aws_key: "Create AWS Key",
+          google_services_account: "Create Google Services Account",
+          ssh_private_key: "Create SSH Private Key",
+          kubeconfig: "Create Kubeconfig",
+          postgreSQL_access: "Create PostgreSQL Access",
+          mySQL_access: "Create MySQL Access",
+        },
+        keys: {
+          aws_key: {
+            name: "",
+            key_id: "",
+            secret_key: "",
+          },
+          google_service_key: {
+            name: "",
+            service_account_key: "",
+          },
+          ssh_private_key: {
+            name: "",
+            ssh_private_key: "",
+          },
+          kubeconfig: {
+            name: "",
+            kubeconfig: "",
+          },
+          postgreSQL_access: {
+            name: "",
+            host_ip: "",
+            username: "",
+            password: "",
+          },
+          mySQL_access: {
+            name: "",
+            host_ip: "",
+            username: "",
+            password: "",
+          },
+        },
+      },
+    };
+  }
+</script>

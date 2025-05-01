@@ -1,5 +1,6 @@
 ---
 import Dashboard from "../../../layouts/Dashboard.astro";
+import ModalForms from "../../../components/ModalForms.astro";
 ---
 
 <Dashboard pageTitle="Superuser Keys">
@@ -37,10 +38,14 @@ import Dashboard from "../../../layouts/Dashboard.astro";
             <option>VM</option>
           </select>
         </label>
-        <button class="btn btn-neutral rounded-none w-[140px]">
+        <button
+          class="btn btn-neutral rounded-none w-[140px]"
+          onclick="superuser_keys.showModal()"
+        >
           + Create New
         </button>
       </div>
     </div>
   </section>
+  <ModalForms dialogId="superuser_keys" slot="dialog" type="keys" />
 </Dashboard>
