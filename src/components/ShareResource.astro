@@ -1,0 +1,79 @@
+---
+import Forms from "./Forms.astro";
+---
+
+<dialog slot="dialog" class="modal" id="shareresource">
+  <div class="modal-box">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >✕</button
+      >
+    </form>
+    <Forms x-data="formShareResource()" class="flex flex-col gap-6">
+      <h2 class="card-title justify-center">Share Resource</h2>
+      <div class="flex flex-col gap-6">
+        <label>
+          <input
+            type="text"
+            placeholder="Input your share to"
+            class="input input-bordered w-full rounded-none"
+            x-model="share_to"
+          />
+        </label>
+      </div>
+      <div class="flex flex-col gap-6">
+        <label>
+          <select
+            id="choose_permission"
+            class="select select-bordered w-full rounded-none"
+            x-model="choose_permission"
+          >
+            <option value="" selected disabled>Select permission</option>
+            <option value="viewer">Viewer</option>
+            <option value="editor">Editor</option>
+            <option value="admin">Admin</option>
+          </select>
+        </label>
+      </div>
+      <div class="flex flex-col gap-6">
+        <label>
+          <input
+            type="date"
+            class="input input-bordered w-full rounded-none"
+            x-model="expired_at"
+          />
+        </label>
+      </div>
+      <div class="flex flex-col gap-6">
+        <label>
+          <select
+            id="choose_permission"
+            class="select select-bordered w-full rounded-none"
+            x-model="rotation_period"
+          >
+            <option value="" selected disabled>Choose Rotation Period</option>
+            <option value="1_week">1 Week</option>
+            <option value="2_week">2 Week</option>
+            <option value="1_month">1 Month</option>
+            <option value="3_month">3 Month</option>
+            <option value="6_month">6 Month</option>
+            <option value="1_year">1 Year</option>
+          </select>
+        </label>
+      </div>
+      <button type="submit" class="btn btn-neutral w-full rounded-none">
+        Share
+      </button>
+    </Forms>
+  </div>
+</dialog>
+<script slot="script" is:inline>
+  function formShareResource() {
+    return {
+      share_to: "",
+      choose_permission: "",
+      expired_at: null,
+      rotation_period: "",
+    };
+  }
+</script>
