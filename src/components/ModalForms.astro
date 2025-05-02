@@ -1,180 +1,400 @@
 ---
 import Forms from "../components/Forms.astro";
 const { type, dialogId } = Astro.props;
+
+console.log("ModalForms", type, dialogId);
 ---
 
 <dialog slot="dialog" class="modal" id={dialogId}>
   <div class="modal-box">
-    <Forms x-data="formHandler()" class="flex flex-col gap-6">
-      <h1
-        class="text-xl font-bold"
-        x-text="form.titles[category_name] || 'Create'"
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >✕</button
       >
-      </h1>
-      <label>
-        <select class="select rounded-none w-full" x-model="category_name">
-          <option disabled selected value="">Choose Services</option>
-          <option value="aws_key">Create AWS Key</option>
-          <option value="google_services_account"
-            >Create Google Services Account</option
-          >
-          <option value="ssh_private_key">Create SSH Private Key</option>
-          <option value="kubeconfig">Create Kubeconfig</option>
-          <option value="postgreSQL_access">Create PostgreSQL Access</option>
-          <option value="mySQL_access">Create MySQL Access</option>
-        </select>
-      </label>
-      <template x-if="category_name === 'aws_key'">
-        <div class="flex flex-col gap-6">
-          <label>
-            <input
-              type="text"
-              placeholder="Input Name"
-              class="input w-full rounded-none"
-              x-model="form.keys.aws_key.name"
+    </form>
+    <Forms x-data="formHandler()" class="flex flex-col gap-6">
+      {
+        type === "keys" ? (
+          <div class="flex flex-col gap-6">
+            <h1
+              class="text-xl font-bold"
+              x-text="form.titles[category_name] || 'Create'"
             />
-          </label>
-          <label>
-            <textarea
-              class="textarea w-full rounded-none"
-              x-model="form.keys.aws_key.key_id"
-              placeholder="Input Key Id"></textarea>
-          </label>
-          <label>
-            <textarea
-              class="textarea w-full rounded-none"
-              x-model="form.keys.aws_key.secret_key"
-              placeholder="Input Secret Key"></textarea>
-          </label>
-        </div>
-      </template>
-      <template x-if="category_name === 'google_services_account'">
-        <div class="flex flex-col gap-6">
-          <label>
-            <input
-              type="text"
-              placeholder="Input Name"
-              class="input w-full rounded-none"
-              x-model="form.keys.google_service_key.name"
+            <label>
+              <select
+                class="select rounded-none w-full"
+                x-model="category_name"
+              >
+                <option disabled selected value="">
+                  Choose Services
+                </option>
+                <option value="aws_key">Create AWS Key</option>
+                <option value="google_services_account">
+                  Create Google Services Account
+                </option>
+                <option value="ssh_private_key">Create SSH Private Key</option>
+                <option value="kubeconfig">Create Kubeconfig</option>
+                <option value="postgreSQL_access">
+                  Create PostgreSQL Access
+                </option>
+                <option value="mySQL_access">Create MySQL Access</option>
+              </select>
+            </label>
+            <template x-if="category_name === 'aws_key'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.aws_key.name"
+                  />
+                </label>
+                <label>
+                  <textarea
+                    class="textarea w-full rounded-none"
+                    x-model="form.keys.aws_key.key_id"
+                    placeholder="Input Key Id"
+                  />
+                </label>
+                <label>
+                  <textarea
+                    class="textarea w-full rounded-none"
+                    x-model="form.keys.aws_key.secret_key"
+                    placeholder="Input Secret Key"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'google_services_account'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.google_service_key.name"
+                  />
+                </label>
+                <label>
+                  <textarea
+                    placeholder="Input Service Account Key"
+                    class="textarea w-full rounded-none"
+                    x-model="form.keys.google_service_key.service_account_key"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'ssh_private_key'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.ssh_private_key.name"
+                  />
+                </label>
+                <label>
+                  <textarea
+                    placeholder="Input SSH Private Key"
+                    class="textarea w-full rounded-none"
+                    x-model="form.keys.ssh_private_key.ssh_private_key"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'kubeconfig'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.kubeconfig.name"
+                  />
+                </label>
+                <label>
+                  <textarea
+                    placeholder="Input Kubeconfig"
+                    class="textarea w-full rounded-none"
+                    x-model="form.keys.kubeconfig.kubeconfig"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'postgreSQL_access'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.postgreSQL_access.name"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Host IP"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.postgreSQL_access.host_ip"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Username"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.postgreSQL_access.username"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="password"
+                    placeholder="Input Password"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.postgreSQL_access.password"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'mySQL_access'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.mySQL_access.name"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Host IP"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.mySQL_access.host_ip"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Username"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.mySQL_access.username"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="password"
+                    placeholder="Input Password"
+                    class="input w-full rounded-none"
+                    x-model="form.keys.mySQL_access.password"
+                  />
+                </label>
+              </div>
+            </template>
+          </div>
+        ) : (
+          <div class="flex flex-col gap-6">
+            <h1
+              class="text-xl font-bold"
+              x-text="form.resources_title[category_name] || 'Create'"
             />
-          </label>
-          <label>
-            <textarea
-              placeholder="Input Service Account Key"
-              class="textarea w-full rounded-none"
-              x-model="form.keys.google_service_key.service_account_key"
-            ></textarea>
-          </label>
-        </div>
-      </template>
-      <template x-if="category_name === 'ssh_private_key'">
-        <div class="flex flex-col gap-6">
-          <label>
-            <input
-              type="text"
-              placeholder="Input Name"
-              class="input w-full rounded-none"
-              x-model="form.keys.ssh_private_key.name"
-            />
-          </label>
-          <label>
-            <textarea
-              placeholder="Input SSH Private Key"
-              class="textarea w-full rounded-none"
-              x-model="form.keys.ssh_private_key.ssh_private_key"></textarea>
-          </label>
-        </div>
-      </template>
-      <template x-if="category_name === 'kubeconfig'">
-        <div class="flex flex-col gap-6">
-          <label>
-            <input
-              type="text"
-              placeholder="Input Name"
-              class="input w-full rounded-none"
-              x-model="form.keys.kubeconfig.name"
-            />
-          </label>
-          <label>
-            <textarea
-              placeholder="Input Kubeconfig"
-              class="textarea w-full rounded-none"
-              x-model="form.keys.kubeconfig.kubeconfig"></textarea>
-          </label>
-        </div>
-      </template>
-      <template x-if="category_name === 'postgreSQL_access'">
-        <div class="flex flex-col gap-6">
-          <label>
-            <input
-              type="text"
-              placeholder="Input Name"
-              class="input w-full rounded-none"
-              x-model="form.keys.postgreSQL_access.name"
-            />
-          </label>
-          <label>
-            <input
-              type="text"
-              placeholder="Input Host IP"
-              class="input w-full rounded-none"
-              x-model="form.keys.postgreSQL_access.host_ip"
-            />
-          </label>
-          <label>
-            <input
-              type="text"
-              placeholder="Input Username"
-              class="input w-full rounded-none"
-              x-model="form.keys.postgreSQL_access.username"
-            />
-          </label>
-          <label>
-            <input
-              type="password"
-              placeholder="Input Password"
-              class="input w-full rounded-none"
-              x-model="form.keys.postgreSQL_access.password"
-            />
-          </label>
-        </div>
-      </template>
-      <template x-if="category_name === 'mySQL_access'">
-        <div class="flex flex-col gap-6">
-          <label>
-            <input
-              type="text"
-              placeholder="Input Name"
-              class="input w-full rounded-none"
-              x-model="form.keys.mySQL_access.name"
-            />
-          </label>
-          <label>
-            <input
-              type="text"
-              placeholder="Input Host IP"
-              class="input w-full rounded-none"
-              x-model="form.keys.mySQL_access.host_ip"
-            />
-          </label>
-          <label>
-            <input
-              type="text"
-              placeholder="Input Username"
-              class="input w-full rounded-none"
-              x-model="form.keys.mySQL_access.username"
-            />
-          </label>
-          <label>
-            <input
-              type="password"
-              placeholder="Input Password"
-              class="input w-full rounded-none"
-              x-model="form.keys.mySQL_access.password"
-            />
-          </label>
-        </div>
-      </template>
+            <label>
+              <select
+                class="select rounded-none w-full"
+                x-model="category_name"
+              >
+                <option disabled selected value="">
+                  Choose Services
+                </option>
+                <option value="aws">AWS</option>
+                <option value="gcp">Google Cloud Platform</option>
+                <option value="vm">VM</option>
+                <option value="kubernetes">Kubernetes</option>
+                <option value="mysql_access">PostgreSQL Access</option>
+                <option value="postgre_access">MySQL Access</option>
+              </select>
+            </label>
+            <template x-if="category_name === 'aws'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.aws.name"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Access Key Id"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.aws.access_key_id"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Secret Access Key"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.aws.secret_access_key"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'gcp'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.gcp.name"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Project Id"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.gcp.project_id"
+                  />
+                </label>
+                <label>
+                  <textarea
+                    placeholder="Input Service Account Key"
+                    class="textarea w-full rounded-none"
+                    x-model="form.resources.gcp.service_account_key"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'vm'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.vm.name"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input IP Address"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.vm.ip_address"
+                  />
+                </label>
+                <label>
+                  <textarea
+                    placeholder="Input SSH Key"
+                    class="textarea w-full rounded-none"
+                    x-model="form.resources.vm.ssh_key"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'kubernetes'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.kubernetes.name"
+                  />
+                </label>
+                <label>
+                  <textarea
+                    placeholder="Input Kubeconfig"
+                    class="textarea w-full rounded-none"
+                    x-model="form.resources.kubernetes.kubeconfig"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'mysql_access'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.mysql_access.name"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Host IP"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.mysql_access.host_ip"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Username"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.mysql_access.username"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="password"
+                    placeholder="Input Password"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.mysql_access.password"
+                  />
+                </label>
+              </div>
+            </template>
+            <template x-if="category_name === 'postgresql_access'">
+              <div class="flex flex-col gap-6">
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Name"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.postgresql_access.name"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Host IP"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.postgresql_access.host_ip"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="text"
+                    placeholder="Input Username"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.postgresql_access.username"
+                  />
+                </label>
+                <label>
+                  <input
+                    type="password"
+                    placeholder="Input Password"
+                    class="input w-full rounded-none"
+                    x-model="form.resources.postgresql_access.password"
+                  />
+                </label>
+              </div>
+            </template>
+          </div>
+        )
+      }
+
       <button type="submit" class="btn btn-neutral rounded-none w-full">
         Save
       </button>
@@ -219,6 +439,47 @@ const { type, dialogId } = Astro.props;
             password: "",
           },
           mySQL_access: {
+            name: "",
+            host_ip: "",
+            username: "",
+            password: "",
+          },
+        },
+        resources_title: {
+          vm: "VM",
+          kubernetes: "Kubernetes",
+          gcp: "Google Cloud Platform",
+          aws: "Amazon Web Services",
+          mysql_access: "MySQL Access",
+          postgresql_access: "PostgreSQL Access",
+        },
+        resources: {
+          vm: {
+            name: "",
+            ip_address: "",
+            ssh_key: "",
+          },
+          kubernetes: {
+            name: "",
+            kubeconfig: "",
+          },
+          gcp: {
+            name: "",
+            project_id: "",
+            service_account_key: "",
+          },
+          aws: {
+            name: "",
+            access_key_id: "",
+            secret_access_key: "",
+          },
+          mysql_access: {
+            name: "",
+            host_ip: "",
+            username: "",
+            password: "",
+          },
+          postgresql_access: {
             name: "",
             host_ip: "",
             username: "",
