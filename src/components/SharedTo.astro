@@ -1,0 +1,101 @@
+---
+import { ICONS } from "../constants";
+---
+
+<dialog slot="dialog" class="modal" id="sharedto">
+  <div class="modal-box max-w-3xl">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >✕</button
+      >
+    </form>
+
+    <div
+      x-data="{
+        shareds: [
+          {
+            key: 'glend-read-k8s',
+            shared_to: 'glend',
+            permission: 'read',
+            expire_at: '2023-10-01',
+            rotate: '2023-10-01'
+          }
+        ],
+        selected: [],
+
+        toggle(id) {
+          const index = this.selected.indexOf(id);
+          if (index > -1) {
+            this.selected.splice(index, 1);
+          } else {
+            this.selected.push(id);
+          }
+        },
+
+        isAllSelected() {
+          return this.selected.length > 0 && this.selected.length === this.shareds.length;
+        },
+
+        toggleAll() {
+          if (this.isAllSelected()) {
+            this.selected = [];
+          } else {
+            this.selected = this.shareds.map(item => item.key);
+          }
+        },
+
+        deleteItem(key) {
+          this.shareds = this.shareds.filter(item => item.key !== key);
+          this.selected = this.selected.filter(id => id !== key);
+        }
+      }"
+      class="overflow-x-auto"
+    >
+      <table class="table">
+        <thead>
+          <tr>
+            <th>
+              <input
+                type="checkbox"
+                class="checkbox"
+                :checked="isAllSelected()"
+                @change="toggleAll"
+              />
+            </th>
+            <th class="text-black">Shared to</th>
+            <th class="text-black">Permission</th>
+            <th class="text-black">Expired At</th>
+            <th class="text-black">Next Rotation</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <template x-for="shared in shareds" :key="shared.key">
+            <tr>
+              <td>
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  :checked="selected.includes(shared.key)"
+                  @change="toggle(shared.key)"
+                />
+              </td>
+              <td x-text="shared.shared_to"></td>
+              <td x-text="shared.permission"></td>
+              <td x-text="shared.expire_at"></td>
+              <td x-text="shared.rotate"></td>
+              <td>
+                <button
+                  class="cursor-pointer"
+                  @click.prevent="deleteItem(shared.key)"
+                >
+                  <ICONS.delete class="fill-red-600" />
+                </button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</dialog>

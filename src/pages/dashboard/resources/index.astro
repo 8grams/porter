@@ -1,12 +1,14 @@
 ---
 import Dashboard from "../../../layouts/Dashboard.astro";
 import ModalForms from "../../../components/ModalForms.astro";
+import { ICONS } from "../../../constants";
+import SharedTo from "../../../components/SharedTo.astro";
 ---
 
 <Dashboard pageTitle="Resource">
   <section
     slot="content"
-    class="card bg-white w-full rounded-none py-12 px-12 shadow-sm"
+    class="card bg-white w-full rounded-none py-12 px-12 shadow-sm flex flex-col gap-8"
   >
     <div class="flex justify-between items-center gap-4 flex-wrap">
       <h2 class="text-xl font-semibold">Resource</h2>
@@ -46,6 +48,38 @@ import ModalForms from "../../../components/ModalForms.astro";
         </button>
       </div>
     </div>
+    <div class="grid grid-cols-4">
+      <div class="card card-border bg-white rounded-none">
+        <div class="card-body">
+          <h2 class="card-title">8grams</h2>
+          <div class="flex flex-col gap-3">
+            <div class="flex flex-row justify-between items-center">
+              <p>Type</p>
+              <p>Virtual Machine</p>
+            </div>
+            <div class="flex flex-row justify-between items-center">
+              <p>IP</p>
+              <p>127.0.0.1</p>
+            </div>
+            <div class="flex flex-row justify-between items-center">
+              <p>Open in console</p>
+              <a href="#">
+                <ICONS.terminal class="fill-black" />
+              </a>
+            </div>
+            <div class="flex flex-row justify-end items-center">
+              <p>See detail</p>
+              <button class="cursor-pointer" onclick="sharedto.showModal()">
+                <ICONS.openInNew class="fill-black" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
-  <ModalForms dialogId="resource" slot="dialog" type="resources" />
+  <div slot="dialog">
+    <ModalForms dialogId="resource" slot="dialog" type="resources" />
+    <SharedTo />
+  </div>
 </Dashboard>
