@@ -22,8 +22,14 @@
     "tailwindcss": "^4.1.4"
   },
   "devDependencies": {
+    "@types/node": "^22.15.3",
     "daisyui": "^5.0.28",
     "prettier": "3.5.3",
     "prettier-plugin-astro": "0.14.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sqlite3"
+    ]
   }
 }

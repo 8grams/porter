@@ -1,5 +1,21 @@
 ---
 import Dashboard from "../../../../layouts/Dashboard.astro";
+import { Fetcher } from "../../../../utils/fetcher";
+import EligibleUserModal from "../../../../components/EligibleUserModal.astro";
+import { ICONS } from "../../../../constants";
+
+interface EligibleUsers {
+  id: number;
+  email: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+const eligibleUsers = (await Fetcher.fetch(
+  "/api/dashboard/settings/eligible-users",
+)) as EligibleUsers[];
+
+const usersJson = JSON.stringify(eligibleUsers);
 ---
 
 <Dashboard pageTitle="Eligible Users">
@@ -7,14 +23,87 @@ import Dashboard from "../../../../layouts/Dashboard.astro";
     slot="content"
     class="card bg-white w-full rounded-none py-12 px-12 shadow-sm"
   >
-    <div class="flex justify-between items-center gap-4 flex-wrap">
+    <div class="flex justify-between items-center gap-4 flex-wrap mb-6">
       <h2 class="text-xl font-semibold">Eligible Users</h2>
       <button
         class="btn btn-neutral rounded-none w-[140px]"
-        onclick="adduser.showModal()"
+        onclick="eligibleusers.showModal()"
       >
         Add Users
       </button>
     </div>
+    <div class="overflow-x-auto">
+      <div
+        x-data={`{ 
+        users: ${usersJson}, 
+        selectedIds: [], 
+        selectAll: false,
+        
+        toggleSelection(id) {
+          if (this.selectedIds.includes(id)) {
+            this.selectedIds = this.selectedIds.filter(item => item !== id);
+            this.selectAll = false;
+          } else {
+            this.selectedIds.push(id);
+            this.selectAll = this.selectedIds.length === this.users.length;
+          }
+        },
+        
+        toggleSelectAll() {
+          this.selectAll = !this.selectAll;
+          if (this.selectAll) {
+            this.selectedIds = this.users.map(user => user.id);
+          } else {
+            this.selectedIds = [];
+          }
+        },
+        
+        isSelected(id) {
+          return this.selectedIds.includes(id);
+        }
+      }`}
+      >
+        <table class="table">
+          <thead>
+            <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  class="checkbox"
+                  x-model="selectAll"
+                  @click="toggleSelectAll()"
+                />
+              </th>
+              <th class="text-black">Email</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="user in users" :key="user.id">
+              <tr>
+                <td>
+                  <input
+                    type="checkbox"
+                    class="checkbox"
+                    :checked="isSelected(user.id)"
+                    @click="toggleSelection(user.id)"
+                  />
+                </td>
+                <td class="text-black" x-text="user.email"></td>
+                <td class="flex gap-4 items-center">
+                  <button class="cursor-pointer">
+                    <ICONS.edit class="fill-black" />
+                  </button>
+                  <button class="cursor-pointer">
+                    <ICONS.delete class="fill-black" />
+                  </button>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </section>
+  <EligibleUserModal slot="dialog" type="create" />
 </Dashboard>
