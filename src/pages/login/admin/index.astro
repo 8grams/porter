@@ -5,15 +5,17 @@ import Layout from "../../../layouts/Layout.astro";
 
 <Layout pageTitle="Login Admin">
   <section class="h-screen flex items-center justify-center">
+    <div class="toast toast-top toast-end" id="toast-container"></div>
     <div class="card w-full max-w-md shadow-xl bg-base-100">
       <div class="card-body flex flex-col gap-6">
         <h2 class="card-title justify-center">Porter - Login Admin</h2>
-        <Forms method="POST">
+        <Forms id="admin-login">
           <div class="flex flex-col gap-2">
             <label for="email">Email</label>
             <input
               id="email"
               type="email"
+              name="email"
               placeholder="Input your email"
               class="input input-bordered w-full rounded-none"
             />
@@ -23,6 +25,7 @@ import Layout from "../../../layouts/Layout.astro";
             <input
               id="password"
               type="password"
+              name="password"
               placeholder="Input your password"
               class="input input-bordered w-full rounded-none"
             />
@@ -37,3 +40,60 @@ import Layout from "../../../layouts/Layout.astro";
     </div>
   </section>
 </Layout>
+<script>
+  function showToast(message = "", type = "info") {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `alert alert-${type}`;
+    toast.innerHTML = `<span>${message}</span>`;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  }
+
+  const adminLoginEl = document.getElementById("admin-login");
+
+  if (adminLoginEl instanceof HTMLFormElement) {
+    const loading = { value: false };
+    const error = { value: "" };
+
+    adminLoginEl.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      loading.value = true;
+      error.value = "";
+
+      try {
+        const res = await fetch("/api/login/admin", {
+          method: "POST",
+          body: new FormData(adminLoginEl),
+          credentials: "include",
+        });
+        const data = await res.json();
+        loading.value = false;
+
+        if (data.error) {
+          error.value = data.error;
+          showToast(data.error, "error");
+        } else {
+          showToast("Login berhasil.", "success");
+          window.location.href = "/dashboard/resources";
+        }
+      } catch (err: unknown) {
+        loading.value = false;
+        if (err instanceof Error) {
+          error.value = err.message;
+          console.error(err.message);
+          showToast(err.message, "error");
+        } else {
+          error.value = "Terjadi kesalahan yang tidak diketahui.";
+          console.error(err);
+        }
+      }
+    });
+  }
+</script>

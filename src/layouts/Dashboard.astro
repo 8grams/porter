@@ -1,5 +1,6 @@
 ---
 import Layout from "./Layout.astro";
+import Forms from "../components/Forms.astro";
 const { pageTitle } = Astro.props;
 ---
 
@@ -69,7 +70,11 @@ const { pageTitle } = Astro.props;
           @click.outside="open = false"
           x-cloak
         >
-          <li><a href="/logout">Logout</a></li>
+          <li>
+            <Forms action="/api/logout" method="POST">
+              <button type="submit">Logout</button>
+            </Forms>
+          </li>
         </ul>
       </div>
     </div>
