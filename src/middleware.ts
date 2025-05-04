@@ -42,6 +42,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const protectedPaths = ["/dashboard"];
   const unauthenticatedOnlyPaths = ["/login", "/login/admin"];
+  const adminPath = ["/dashboard/settings/eligible-users"];
 
   const verifyResult = await verifyAuth(token);
 
@@ -54,15 +55,27 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   if (verifyResult.status === "authorized") {
-    context.locals.user = verifyResult.payload as any;
+    context.locals.user = verifyResult.payload as {
+      email: string;
+      role: string;
+      iat: number;
+      exp: number;
+      jti: string;
+    };
     if (unauthenticatedOnlyPaths.some((path) => pathname === path)) {
       return context.redirect("/dashboard/resources");
+    }
+    if (
+      adminPath.some((path) => pathname.startsWith(path)) &&
+      context.locals.user.role !== "ADMIN"
+    ) {
+      return new Response("Forbidden: Admins only", { status: 403 });
     }
     return next();
   }
 
   if (verifyResult.status === "unauthorized") {
-    context.locals.user = null;
+    context.locals.user = undefined;
     if (protectedPaths.some((path) => pathname.startsWith(path))) {
       return context.redirect("/login");
     }

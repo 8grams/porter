@@ -1,6 +1,5 @@
 ---
 import Dashboard from "../../../layouts/Dashboard.astro";
-import ModalForms from "../../../components/ModalForms.astro";
 ---
 
 <Dashboard pageTitle="Resource">
@@ -38,14 +37,7 @@ import ModalForms from "../../../components/ModalForms.astro";
             <option>VM</option>
           </select>
         </label>
-        <button
-          class="btn btn-neutral rounded-none w-[140px]"
-          onclick="shared_with_you_modal.showModal()"
-        >
-          + Create New
-        </button>
       </div>
     </div>
   </section>
-  <ModalForms dialogId="shared_with_you_modal" slot="dialog" type="keys" />
 </Dashboard>

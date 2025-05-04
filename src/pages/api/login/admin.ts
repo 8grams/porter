@@ -4,6 +4,8 @@ import { nanoid } from "nanoid";
 
 export const secret = new TextEncoder().encode(import.meta.env.JWT_SECRET_KEY);
 
+const role = "ADMIN";
+
 export const POST: APIRoute = async (ctx) => {
   try {
     const payload = await ctx.request.formData();
@@ -28,7 +30,7 @@ export const POST: APIRoute = async (ctx) => {
       });
     }
 
-    const token = await new SignJWT({})
+    const token = await new SignJWT({ role, email })
       .setProtectedHeader({ alg: "HS256" })
       .setJti(nanoid())
       .setIssuedAt()

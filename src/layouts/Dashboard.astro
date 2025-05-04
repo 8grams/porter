@@ -2,6 +2,8 @@
 import Layout from "./Layout.astro";
 import Forms from "../components/Forms.astro";
 const { pageTitle } = Astro.props;
+
+const { user } = Astro.locals;
 ---
 
 <Layout pageTitle={pageTitle}>
@@ -37,12 +39,46 @@ const { pageTitle } = Astro.props;
             href="/dashboard/shared-with-you">Shared with you</a
           >
         </li>
-        <li>
-          <a
-            :class="current === '/dashboard/settings' ? 'underline underline-offset-12 font-bold text-neutral' : 'text-gray-500'"
-            href="/dashboard/settings">Settings</a
-          >
-        </li>
+        {user?.role === 'ADMIN' && (
+          <li x-data="{ open: false }" class="relative">
+            <a
+              href="#"
+              @click.prevent="open = !open"
+              :class="current === '/dashboard/settings' ? 'underline underline-offset-12 font-bold text-neutral' : 'text-gray-500'"
+              class="cursor-pointer flex items-center justify-between"
+            >
+              Settings
+              <svg
+                class="w-4 h-4 ml-1 transform"
+                :class="open ? 'rotate-180' : ''"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+
+            <ul
+              x-show="open"
+              @click.outside="open = false"
+              x-transition
+              class="absolute left-0 mt-2 bg-white shadow rounded p-2 z-10 w-48"
+            >
+              <li>
+                <a
+                  href="/dashboard/settings/eligible-users"
+                  class="block px-4 py-2 hover:bg-gray-100 rounded"
+                >Eligible Users</a
+                >
+              </li>
+            </ul>
+          </li>
+        )}
       </ul>
 
       <div class="relative" x-data="{ open: false }">

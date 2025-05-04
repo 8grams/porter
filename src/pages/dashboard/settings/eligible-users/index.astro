@@ -1,0 +1,20 @@
+---
+import Dashboard from "../../../../layouts/Dashboard.astro";
+---
+
+<Dashboard pageTitle="Eligible Users">
+  <section
+    slot="content"
+    class="card bg-white w-full rounded-none py-12 px-12 shadow-sm"
+  >
+    <div class="flex justify-between items-center gap-4 flex-wrap">
+      <h2 class="text-xl font-semibold">Eligible Users</h2>
+      <button
+        class="btn btn-neutral rounded-none w-[140px]"
+        onclick="adduser.showModal()"
+      >
+        Add Users
+      </button>
+    </div>
+  </section>
+</Dashboard>
