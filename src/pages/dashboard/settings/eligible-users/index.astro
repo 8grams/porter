@@ -1,68 +1,26 @@
 ---
 import Dashboard from "../../../../layouts/Dashboard.astro";
-import { Fetcher } from "../../../../utils/fetcher";
 import EligibleUserModal from "../../../../components/EligibleUserModal.astro";
 import { ICONS } from "../../../../constants";
-
-interface EligibleUsers {
-  id: number;
-  email: string;
-  created_at?: Date;
-  updated_at?: Date;
-}
-
-const eligibleUsers = (await Fetcher.fetch(
-  "/api/dashboard/settings/eligible-users",
-)) as EligibleUsers[];
-
-const usersJson = JSON.stringify(eligibleUsers);
 ---
 
 <Dashboard pageTitle="Eligible Users">
   <section
     slot="content"
     class="card bg-white w-full rounded-none py-12 px-12 shadow-sm"
+    x-data="loadEligibleUsers()"
   >
     <div class="flex justify-between items-center gap-4 flex-wrap mb-6">
       <h2 class="text-xl font-semibold">Eligible Users</h2>
       <button
         class="btn btn-neutral rounded-none w-[140px]"
-        onclick="eligibleusers.showModal()"
+        @click="openCreateModal"
       >
         Add Users
       </button>
     </div>
     <div class="overflow-x-auto">
-      <div
-        x-data={`{ 
-        users: ${usersJson}, 
-        selectedIds: [], 
-        selectAll: false,
-        
-        toggleSelection(id) {
-          if (this.selectedIds.includes(id)) {
-            this.selectedIds = this.selectedIds.filter(item => item !== id);
-            this.selectAll = false;
-          } else {
-            this.selectedIds.push(id);
-            this.selectAll = this.selectedIds.length === this.users.length;
-          }
-        },
-        
-        toggleSelectAll() {
-          this.selectAll = !this.selectAll;
-          if (this.selectAll) {
-            this.selectedIds = this.users.map(user => user.id);
-          } else {
-            this.selectedIds = [];
-          }
-        },
-        
-        isSelected(id) {
-          return this.selectedIds.includes(id);
-        }
-      }`}
-      >
+      <div>
         <table class="table">
           <thead>
             <tr>
@@ -79,6 +37,31 @@ const usersJson = JSON.stringify(eligibleUsers);
             </tr>
           </thead>
           <tbody>
+            <div
+              x-show="confirmPopup.show"
+              x-transition
+              @click.outside="hideConfirmPopup()"
+              class="fixed z-50 bg-white border border-gray-300 shadow-md rounded-md p-4 w-60 max-w-[90vw]"
+              :style="`top: ${confirmPopup.y}px; left: ${confirmPopup.x}px`"
+            >
+              <p class="text-sm text-gray-700 mb-4">
+                Are you sure you want to delete?
+              </p>
+              <div class="flex justify-end gap-2">
+                <button
+                  class="btn btn-sm btn-error text-white"
+                  @click="deleteUser(confirmPopup.id)"
+                >
+                  Delete
+                </button>
+                <button
+                  class="btn btn-sm btn-ghost"
+                  @click="hideConfirmPopup()"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
             <template x-for="user in users" :key="user.id">
               <tr>
                 <td>
@@ -90,13 +73,21 @@ const usersJson = JSON.stringify(eligibleUsers);
                   />
                 </td>
                 <td class="text-black" x-text="user.email"></td>
-                <td class="flex gap-4 items-center">
-                  <button class="cursor-pointer">
-                    <ICONS.edit class="fill-black" />
-                  </button>
-                  <button class="cursor-pointer">
-                    <ICONS.delete class="fill-black" />
-                  </button>
+                <td class="relative">
+                  <div class="flex gap-4 items-center">
+                    <button
+                      class="cursor-pointer"
+                      @click="openUpdateModal(user)"
+                    >
+                      <ICONS.edit class="fill-black" />
+                    </button>
+                    <button
+                      class="cursor-pointer"
+                      @click="showConfirmPopup($event, user.id)"
+                    >
+                      <ICONS.delete class="fill-black" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             </template>
@@ -104,6 +95,122 @@ const usersJson = JSON.stringify(eligibleUsers);
         </table>
       </div>
     </div>
+    <EligibleUserModal
+      slot="dialog"
+      x-show="modalType === 'create' || modalType === 'update'"
+      :selectedUser="selectedUser"
+    />
   </section>
-  <EligibleUserModal slot="dialog" type="create" />
 </Dashboard>
+<script slot="script" is:inline>
+  function loadEligibleUsers() {
+    return {
+      users: [],
+      selectedIds: [],
+      selectAll: false,
+      modalType: "",
+      selectedUser: null,
+
+      confirmPopup: {
+        show: false,
+        x: 0,
+        y: 0,
+        id: null,
+      },
+      init() {
+        this.fetchUsers();
+      },
+      async fetchUsers() {
+        try {
+          const fetcher = await fetch("/api/dashboard/settings/eligible-users");
+          this.users = await fetcher.json();
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      openCreateModal() {
+        this.modalType = "create";
+        this.selectedUser = null;
+        const modal = document.getElementById("eligibleusers");
+        if (modal) modal.showModal();
+      },
+
+      openUpdateModal(user) {
+        this.modalType = "update";
+        this.selectedUser = user;
+        const modal = document.getElementById("eligibleusers");
+        if (modal) modal.showModal();
+      },
+
+      toggleSelection(id) {
+        if (this.selectedIds.includes(id)) {
+          this.selectedIds = this.selectedIds.filter((item) => item !== id);
+          this.selectAll = false;
+        } else {
+          this.selectedIds.push(id);
+          this.selectAll = this.selectedIds.length === this.users.length;
+        }
+      },
+
+      toggleSelectAll() {
+        this.selectAll = !this.selectAll;
+        this.selectedIds = this.selectAll ? this.users.map((u) => u.id) : [];
+      },
+
+      isSelected(id) {
+        return this.selectedIds.includes(id);
+      },
+
+      showConfirmPopup(event, id) {
+        const button = event.target.closest("button");
+        const rect = button.getBoundingClientRect();
+        const popupWidth = 240;
+        const popupHeight = 120;
+
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let x = rect.left + window.scrollX;
+        let y = rect.top + window.scrollY + rect.height;
+
+        if (x + popupWidth > viewportWidth) {
+          x = viewportWidth - popupWidth - 16;
+        }
+        if (y + popupHeight > viewportHeight + window.scrollY) {
+          y = rect.top + window.scrollY - popupHeight - 16;
+        }
+        this.confirmPopup = {
+          show: true,
+          x,
+          y,
+          id,
+        };
+      },
+
+      hideConfirmPopup() {
+        this.confirmPopup.show = false;
+      },
+
+      async deleteUser(id) {
+        const fetcher = await fetch(`/api/dashboard/settings/eligible-users`, {
+          method: "DELETE",
+          body: JSON.stringify({ id }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        }).then((res) => res.json());
+        if (fetcher.code === 200) {
+          this.hideConfirmPopup();
+          window.showToast(fetcher.message, "success");
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } else {
+          console.error(fetcher.error);
+          window.showToast(fetcher.error, "error");
+        }
+      },
+    };
+  }
+</script>

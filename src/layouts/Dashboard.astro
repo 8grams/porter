@@ -122,3 +122,20 @@ const { user } = Astro.locals;
 </Layout>
 <slot name="dialog" />
 <slot name="script" />
+<script is:inline>
+  window.showToast = function(message = "", type = "info") {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `alert alert-${type} shadow-md`;
+    toast.innerHTML = `<span>${message}</span>`;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.remove();
+    }, 3000);
+  };
+
+</script>

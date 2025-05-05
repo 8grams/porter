@@ -16,9 +16,12 @@ export const POST: APIRoute = async (ctx) => {
   const email = payload.get("email");
 
   if (!email || typeof email !== "string") {
-    return new Response(JSON.stringify({ error: "Email is required!" }), {
-      status: 400,
-    });
+    return new Response(
+      JSON.stringify({ error: "Email is required!", code: 400 }),
+      {
+        status: 400,
+      },
+    );
   }
 
   const db = await openDB();
@@ -30,7 +33,7 @@ export const POST: APIRoute = async (ctx) => {
     );
     if (existingUser) {
       return new Response(
-        JSON.stringify({ error: "Email is already registered!" }),
+        JSON.stringify({ error: "Email is already registered!", code: 400 }),
         { status: 400 },
       );
     }
@@ -42,7 +45,7 @@ export const POST: APIRoute = async (ctx) => {
       JSON.stringify({
         message: "User added successfully!",
         userId: result.lastID,
-        success: true,
+        code: 200,
       }),
       {
         headers: {
@@ -54,6 +57,116 @@ export const POST: APIRoute = async (ctx) => {
     return new Response(
       JSON.stringify({ error: "Failed to add user, please try again later." }),
       { status: 500 },
+    );
+  }
+};
+
+export const DELETE: APIRoute = async ({ request }) => {
+  try {
+    const { id } = await request.json();
+    if (!id || typeof id !== "number") {
+      return new Response(
+        JSON.stringify({ error: "Valid ID is required.", code: 400 }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+    const db = await openDB();
+    const result = await db.run("DELETE FROM eligible_users WHERE id = ?", [
+      id,
+    ]);
+    if (result.changes === 0) {
+      return new Response(
+        JSON.stringify({ error: "User not found.", code: 404 }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+    return new Response(
+      JSON.stringify({ message: "User deleted successfully.", code: 200 }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  } catch (error) {
+    console.error("DELETE /eligible-users error:", error);
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error. Please try again later.",
+        code: 500,
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+};
+
+export const PUT: APIRoute = async ({ request }) => {
+  const payload = await request.formData();
+  const id = payload.get("_id");
+  const email = payload.get("email");
+
+  if (!id || typeof id !== "string") {
+    return new Response(
+      JSON.stringify({ error: "Valid ID is required.", code: 400 }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  if (!email || typeof email !== "string") {
+    return new Response(
+      JSON.stringify({ error: "Email is required.", code: 400 }),
+      {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+
+  const db = await openDB();
+
+  try {
+    const result = await db.run(
+      "UPDATE eligible_users SET email = ? WHERE id = ?",
+      [email, id],
+    );
+    if (result.changes === 0) {
+      return new Response(
+        JSON.stringify({ error: "User not found.", code: 404 }),
+        {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+    return new Response(
+      JSON.stringify({ message: "Successfully Update User.", code: 200 }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  } catch (error) {
+    console.error("PUT /eligible-users error:", error);
+    return new Response(
+      JSON.stringify({
+        error: "Internal server error. Please try again later.",
+        code: 500,
+      }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      },
     );
   }
 };

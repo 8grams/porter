@@ -1,12 +1,14 @@
 ---
 import Forms from "./Forms.astro";
-
-const { type = "create" } = Astro.props;
-
-console.log(type);
 ---
 
-<dialog slot="dialog" class="modal" id="eligibleusers">
+<dialog
+  slot="dialog"
+  class="modal"
+  id="eligibleusers"
+  x-show="modalType"
+  @close="modalType = null"
+>
   <div class="modal-box">
     <form method="dialog">
       <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -15,15 +17,21 @@ console.log(type);
     </form>
     <Forms
       class="flex flex-col gap-6"
-      action={type === "create"
-        ? "/api/dashboard/settings/eligible-users"
-        : "/api/dashboard/settings/eligible-users/update"}
-      method="POST"
+      action="/api/dashboard/settings/eligible-users"
+      x-bind:method="modalType === 'create' ? 'POST' : 'PUT'"
       x-data="formEligible"
       @submit.prevent="handleSubmit"
     >
-      <h2 class="card-title justify-center">
-        {type === "create" ? "Create" : "Update"} User
+      <input
+        type="hidden"
+        name="_method"
+        x-bind:value="modalType === 'create' ? 'POST' : 'PUT'"
+      />
+      <input type="hidden" name="_id" :value="selectedUser?.id" />
+      <h2
+        class="card-title justify-center"
+        x-text="(modalType === 'create' ? 'Create' : 'Update') + ' User'"
+      >
       </h2>
       <template x-if="error">
         <div role="alert" class="alert alert-error alert-soft">
@@ -38,6 +46,7 @@ console.log(type);
           name="email"
           placeholder="Input email"
           class="input input-bordered w-full rounded-none"
+          :value="selectedUser?.email"
         />
       </div>
       <button
@@ -52,20 +61,6 @@ console.log(type);
   </div>
 </dialog>
 <script slot="script" is:inline>
-  function showToast(message = "", type = "info") {
-    const container = document.getElementById("toast-container");
-    if (!container) return;
-
-    const toast = document.createElement("div");
-    toast.className = `alert alert-${type}`;
-    toast.innerHTML = `<span>${message}</span>`;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-      toast.remove();
-    }, 3000);
-  }
   function formEligible() {
     return {
       message: "",
@@ -79,9 +74,11 @@ console.log(type);
         const form = e.target;
         const formData = new FormData(form);
 
+        console.log(form);
+
         try {
           const response = await fetch(form.action, {
-            method: form.method,
+            method: formData.get("_method"),
             body: formData,
             credentials: "include",
           });
@@ -94,7 +91,7 @@ console.log(type);
             return;
           }
 
-          if (json.success) {
+          if (json.code === 200) {
             this.message = json.message;
             this.error = false;
             this.loading = false;
@@ -103,13 +100,15 @@ console.log(type);
             if (modal) {
               modal.close();
             }
-            showToast(this.message, "success");
+            window.showToast(this.message, "success");
+
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
           }
         } catch (error) {
-          console.log(error);
           this.error = true;
           this.message = error.message || "Something went wrong";
-          console.error(error);
         } finally {
           this.loading = false;
         }
