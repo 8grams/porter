@@ -1,6 +1,15 @@
 ---
 import Forms from "../components/Forms.astro";
 import Layout from "../layouts/Layout.astro";
+
+if (Astro.request.method === "POST") {
+  const clientID = import.meta.env.GOOGLE_CLIENT_ID;
+  const redirectURI = `${Astro.url.origin}/google`;
+  const scope = `https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email`;
+  return Astro.redirect(
+    `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&access_type=offline&client_id=${encodeURIComponent(clientID)}&redirect_uri=${encodeURIComponent(redirectURI)}&scope=${encodeURIComponent(scope)}`,
+  );
+}
 ---
 
 <Layout pageTitle="Login">
@@ -8,7 +17,27 @@ import Layout from "../layouts/Layout.astro";
     <div class="card w-full max-w-md shadow-xl bg-base-100">
       <div class="card-body flex flex-col gap-6">
         <h2 class="card-title justify-center text-2xl">Porter - Login</h2>
-        <Forms method="GET" action="/api/login/google">
+        {
+          Astro.url.searchParams.has("unauthorized") && (
+            <div class="alert alert-error alert-soft mb-4 rounded-none">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 shrink-0 stroke-current"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Sorry, you don't have permission to log in.
+            </div>
+          )
+        }
+        <Forms method="POST">
           <button class="btn btn-neutral w-full rounded-none" type="submit">
             Login with Google
           </button>
