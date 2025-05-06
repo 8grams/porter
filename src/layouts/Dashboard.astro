@@ -83,7 +83,7 @@ const { user } = Astro.locals;
 
       <div class="relative" x-data="{ open: false }">
         <button class="btn btn-ghost" @click="open = !open">
-          @8grams
+          {user?.email}
           <svg
             class="ml-2 w-4 h-4 transition-transform"
             :class="open ? 'rotate-180' : ''"
@@ -107,7 +107,7 @@ const { user } = Astro.locals;
           x-cloak
         >
           <li>
-            <Forms action="/api/logout" method="POST">
+            <Forms method="POST" action="/logout">
               <button type="submit">Logout</button>
             </Forms>
           </li>
@@ -122,20 +122,3 @@ const { user } = Astro.locals;
 </Layout>
 <slot name="dialog" />
 <slot name="script" />
-<script is:inline>
-  window.showToast = function(message = "", type = "info") {
-    const container = document.getElementById("toast-container");
-    if (!container) return;
-
-    const toast = document.createElement("div");
-    toast.className = `alert alert-${type} shadow-md`;
-    toast.innerHTML = `<span>${message}</span>`;
-
-    container.appendChild(toast);
-
-    setTimeout(() => {
-      toast.remove();
-    }, 3000);
-  };
-
-</script>

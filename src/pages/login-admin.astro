@@ -1,0 +1,68 @@
+---
+import Forms from "../components/Forms.astro";
+import Layout from "../layouts/Layout.astro";
+
+const url = new URL(Astro.request.url);
+const showError = url.searchParams.get("error") === "1";
+
+if (Astro.request.method === "POST") {
+  const data = await Astro.request.formData();
+  if (
+    data.get("email") === import.meta.env.ADMIN_USERNAME &&
+    data.get("password") === import.meta.env.ADMIN_PASSWORD
+  ) {
+    Astro?.session?.set("user", {
+      email: data.get("email"),
+      role: "ADMIN",
+    });
+    return Astro.redirect("/dashboard/resources");
+  } else {
+    return Astro.redirect("/login-admin?error=1");
+  }
+}
+---
+
+<Layout pageTitle="Login Admin">
+  <section class="h-screen flex items-center justify-center">
+    <div class="toast toast-top toast-end" id="toast-container"></div>
+    <div class="card w-full max-w-md shadow-xl bg-base-100">
+      <div class="card-body flex flex-col gap-6">
+        <h2 class="card-title justify-center">Porter - Login Admin</h2>
+        {
+          showError && (
+            <div class="alert alert-error shadow-sm text-sm rounded-none alert-soft">
+              <span>Incorrect email or password</span>
+            </div>
+          )
+        }
+        <Forms method="POST">
+          <div class="flex flex-col gap-2">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              placeholder="Input your email"
+              class="input input-bordered w-full rounded-none"
+            />
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              name="password"
+              placeholder="Input your password"
+              class="input input-bordered w-full rounded-none"
+            />
+          </div>
+          <div class="card-actions justify-end">
+            <button class="btn btn-neutral w-full rounded-none" type="submit"
+              >Login</button
+            >
+          </div>
+        </Forms>
+      </div>
+    </div>
+  </section>
+</Layout>

@@ -12,6 +12,12 @@ export default defineConfig({
   adapter: node({
     mode: "standalone",
   }),
+  session: {
+    driver: "fs",
+    options: {
+      base: "./data/session",
+    },
+  },
   server: {
     host: true,
   },
