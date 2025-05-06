@@ -1,0 +1,63 @@
+---
+import Forms from "../../../../components/Forms.astro";
+import { openDB } from "../../../../utils/db";
+const { id } = Astro.props;
+
+const db = await openDB();
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const userId = formData.get("id");
+  const email = formData.get("email");
+
+  if (userId) {
+    await db.run("UPDATE eligible_users SET email = ? WHERE id = ?", [
+      email,
+      userId,
+    ]);
+  } else {
+    await db.run("INSERT INTO eligible_users (email) VALUES (?)", [email]);
+  }
+  return Astro.redirect("/dashboard/settings/eligible-users");
+}
+
+const getCurrentUser =
+  id === "new"
+    ? null
+    : await db.get("SELECT * FROM eligible_users WHERE id = ?", [id]);
+---
+
+<dialog class="modal" id={`modal_eligible_${id}`}>
+  <div class="modal-box">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >✕</button
+      >
+    </form>
+    <Forms
+      class="flex flex-col gap-6"
+      action="/dashboard/settings/eligible-users/modal-eligible-users"
+      method="POST"
+    >
+      <h2 class="card-title justify-center">
+        {id === "new" ? "Create" : "Update"} User
+      </h2>
+      <input type="hidden" name="id" value={getCurrentUser?.id || ""} />
+      <div class="flex flex-col gap-2">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          placeholder="Input email"
+          class="input input-bordered w-full rounded-none"
+          required
+          value={getCurrentUser?.email}
+        />
+      </div>
+      <button class="btn btn-neutral w-full rounded-none" type="submit"
+        >Save</button
+      >
+    </Forms>
+  </div>
+</dialog>

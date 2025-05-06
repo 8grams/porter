@@ -1,25 +1,59 @@
 ---
 import Dashboard from "../../../../layouts/Dashboard.astro";
-import EligibleUserModal from "../../../../components/EligibleUserModal.astro";
 import { ICONS } from "../../../../constants";
+import { openDB } from "../../../../utils/db";
+import ModalEligibleUsers from "./modal-eligible-users.astro";
+import DeleteEligibleUsers from "./delete-eligible-users.astro";
+
+const db = await openDB();
+
+const eligibleUsers = await db.all("SELECT * FROM eligible_users");
 ---
 
 <Dashboard pageTitle="Eligible Users">
   <section
     slot="content"
     class="card bg-white w-full rounded-none py-12 px-12 shadow-sm"
-    x-data="loadEligibleUsers()"
   >
     <div class="flex justify-between items-center gap-4 flex-wrap mb-6">
       <h2 class="text-xl font-semibold">Eligible Users</h2>
       <button
         class="btn btn-neutral rounded-none w-[140px]"
-        @click="openCreateModal"
+        onclick="modal_eligible_new.showModal()"
       >
         Add Users
       </button>
+      <ModalEligibleUsers id={"new"} />
     </div>
-    <div class="overflow-x-auto">
+    <div
+      class="overflow-x-auto"
+      x-data="{
+        selected: [],
+        toggle(id) {
+          if (this.selected.includes(id)) {
+            this.selected = this.selected.filter(i => i !== id);
+          } else {
+            this.selected.push(id);
+          }
+        },
+        isAllSelected() {
+          let inputs = document.querySelectorAll(`input[name='eligible_id']`);
+          return inputs.length && this.selected.length === inputs.length;
+        },
+        toggleAll() {
+          let inputs = document.querySelectorAll(`input[name='eligible_id']`);
+          if (this.isAllSelected()) {
+            this.selected = [];
+          } else {
+            let newSelect = []
+            inputs.forEach(i=>{
+              newSelect.push(i.value)
+            })
+            this.selected = newSelect;
+          }
+        }
+    }"
+    >
       <div>
         <table class="table">
           <thead>
@@ -28,8 +62,9 @@ import { ICONS } from "../../../../constants";
                 <input
                   type="checkbox"
                   class="checkbox"
-                  x-model="selectAll"
-                  @click="toggleSelectAll()"
+                  :checked="isAllSelected()"
+                  @change="toggleAll"
+                  x-effect="$el.indeterminate = !isAllSelected() && selected.length"
                 />
               </th>
               <th class="text-black">Email</th>
@@ -37,180 +72,47 @@ import { ICONS } from "../../../../constants";
             </tr>
           </thead>
           <tbody>
-            <div
-              x-show="confirmPopup.show"
-              x-transition
-              @click.outside="hideConfirmPopup()"
-              class="fixed z-50 bg-white border border-gray-300 shadow-md rounded-md p-4 w-60 max-w-[90vw]"
-              :style="`top: ${confirmPopup.y}px; left: ${confirmPopup.x}px`"
-            >
-              <p class="text-sm text-gray-700 mb-4">
-                Are you sure you want to delete?
-              </p>
-              <div class="flex justify-end gap-2">
-                <button
-                  class="btn btn-sm btn-error text-white"
-                  @click="deleteUser(confirmPopup.id)"
-                >
-                  Delete
-                </button>
-                <button
-                  class="btn btn-sm btn-ghost"
-                  @click="hideConfirmPopup()"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-            <template x-for="user in users" :key="user.id">
-              <tr>
-                <td>
-                  <input
-                    type="checkbox"
-                    class="checkbox"
-                    :checked="isSelected(user.id)"
-                    @click="toggleSelection(user.id)"
-                  />
-                </td>
-                <td class="text-black" x-text="user.email"></td>
-                <td class="relative">
-                  <div class="flex gap-4 items-center">
-                    <button
-                      class="cursor-pointer"
-                      @click="openUpdateModal(user)"
-                    >
-                      <ICONS.edit class="fill-black" />
-                    </button>
-                    <button
-                      class="cursor-pointer"
-                      @click="showConfirmPopup($event, user.id)"
-                    >
-                      <ICONS.delete class="fill-black" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </template>
+            {
+              eligibleUsers.length > 0 &&
+                eligibleUsers.map((user) => (
+                  <tr>
+                    <td>
+                      <input
+                        type="checkbox"
+                        class="checkbox"
+                        name="eligible_id"
+                        value={user.id}
+                        x-bind:checked="selected.includes($el.value)"
+                        @change={`()=>toggle("${user.id}")`}
+                      />
+                    </td>
+                    <td class="text-black">{user.email}</td>
+                    <td class="relative">
+                      <div class="flex gap-4 items-center">
+                        <button
+                          class="cursor-pointer"
+                          data-id={user.id}
+                          @click="document.getElementById('modal_eligible_' + $el.dataset.id).showModal()"
+                        >
+                          <ICONS.edit class="fill-black" />
+                        </button>
+                        <button
+                          class="cursor-pointer"
+                          data-id={user.id}
+                          @click="document.getElementById('delete_modal_eligible_' + $el.dataset.id).showModal()"
+                        >
+                          <ICONS.delete class="fill-black" />
+                        </button>
+                        <DeleteEligibleUsers id={user.id} />
+                        <ModalEligibleUsers id={user.id} />
+                      </div>
+                    </td>
+                  </tr>
+                ))
+            }
           </tbody>
         </table>
       </div>
     </div>
-    <EligibleUserModal
-      slot="dialog"
-      x-show="modalType === 'create' || modalType === 'update'"
-      :selectedUser="selectedUser"
-    />
   </section>
 </Dashboard>
-<script slot="script" is:inline>
-  function loadEligibleUsers() {
-    return {
-      users: [],
-      selectedIds: [],
-      selectAll: false,
-      modalType: "",
-      selectedUser: null,
-
-      confirmPopup: {
-        show: false,
-        x: 0,
-        y: 0,
-        id: null,
-      },
-      init() {
-        this.fetchUsers();
-      },
-      async fetchUsers() {
-        try {
-          const fetcher = await fetch("/api/dashboard/settings/eligible-users");
-          this.users = await fetcher.json();
-        } catch (error) {
-          console.error(error);
-        }
-      },
-      openCreateModal() {
-        this.modalType = "create";
-        this.selectedUser = null;
-        const modal = document.getElementById("eligibleusers");
-        if (modal) modal.showModal();
-      },
-
-      openUpdateModal(user) {
-        this.modalType = "update";
-        this.selectedUser = user;
-        const modal = document.getElementById("eligibleusers");
-        if (modal) modal.showModal();
-      },
-
-      toggleSelection(id) {
-        if (this.selectedIds.includes(id)) {
-          this.selectedIds = this.selectedIds.filter((item) => item !== id);
-          this.selectAll = false;
-        } else {
-          this.selectedIds.push(id);
-          this.selectAll = this.selectedIds.length === this.users.length;
-        }
-      },
-
-      toggleSelectAll() {
-        this.selectAll = !this.selectAll;
-        this.selectedIds = this.selectAll ? this.users.map((u) => u.id) : [];
-      },
-
-      isSelected(id) {
-        return this.selectedIds.includes(id);
-      },
-
-      showConfirmPopup(event, id) {
-        const button = event.target.closest("button");
-        const rect = button.getBoundingClientRect();
-        const popupWidth = 240;
-        const popupHeight = 120;
-
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-
-        let x = rect.left + window.scrollX;
-        let y = rect.top + window.scrollY + rect.height;
-
-        if (x + popupWidth > viewportWidth) {
-          x = viewportWidth - popupWidth - 16;
-        }
-        if (y + popupHeight > viewportHeight + window.scrollY) {
-          y = rect.top + window.scrollY - popupHeight - 16;
-        }
-        this.confirmPopup = {
-          show: true,
-          x,
-          y,
-          id,
-        };
-      },
-
-      hideConfirmPopup() {
-        this.confirmPopup.show = false;
-      },
-
-      async deleteUser(id) {
-        const fetcher = await fetch(`/api/dashboard/settings/eligible-users`, {
-          method: "DELETE",
-          body: JSON.stringify({ id }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        }).then((res) => res.json());
-        if (fetcher.code === 200) {
-          this.hideConfirmPopup();
-          window.showToast(fetcher.message, "success");
-          setTimeout(() => {
-            window.location.reload();
-          }, 500);
-        } else {
-          console.error(fetcher.error);
-          window.showToast(fetcher.error, "error");
-        }
-      },
-    };
-  }
-</script>
