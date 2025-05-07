@@ -24,18 +24,18 @@ const { type, dialogId } = Astro.props;
                 x-model="category_name"
               >
                 <option disabled selected value="">
-                  Choose Services
+                  Choose Type
                 </option>
-                <option value="aws_key">Create AWS Key</option>
+                <option value="aws_key">AWS Key</option>
                 <option value="google_services_account">
-                  Create Google Services Account
+                  Google Services Account
                 </option>
-                <option value="ssh_private_key">Create SSH Private Key</option>
-                <option value="kubeconfig">Create Kubeconfig</option>
+                <option value="ssh_private_key">SSH Private Key</option>
+                <option value="kubeconfig">Kubeconfig</option>
                 <option value="postgreSQL_access">
-                  Create PostgreSQL Access
+                  PostgreSQL Access
                 </option>
-                <option value="mySQL_access">Create MySQL Access</option>
+                <option value="mySQL_access">MySQL Access</option>
               </select>
             </label>
             <template x-if="category_name === 'aws_key'">
@@ -43,7 +43,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.keys.aws_key.name"
                   />
@@ -69,7 +69,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.keys.google_service_key.name"
                   />
@@ -88,7 +88,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.keys.ssh_private_key.name"
                   />
@@ -107,7 +107,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.keys.kubeconfig.name"
                   />
@@ -126,7 +126,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.keys.postgreSQL_access.name"
                   />
@@ -134,7 +134,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Host IP"
+                    placeholder="Host"
                     class="input w-full rounded-none"
                     x-model="form.keys.postgreSQL_access.host_ip"
                   />
@@ -142,7 +142,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Username"
+                    placeholder="Username"
                     class="input w-full rounded-none"
                     x-model="form.keys.postgreSQL_access.username"
                   />
@@ -150,7 +150,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="password"
-                    placeholder="Input Password"
+                    placeholder="Password"
                     class="input w-full rounded-none"
                     x-model="form.keys.postgreSQL_access.password"
                   />
@@ -162,7 +162,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.keys.mySQL_access.name"
                   />
@@ -170,7 +170,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Host IP"
+                    placeholder="Host"
                     class="input w-full rounded-none"
                     x-model="form.keys.mySQL_access.host_ip"
                   />
@@ -178,7 +178,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Username"
+                    placeholder="Username"
                     class="input w-full rounded-none"
                     x-model="form.keys.mySQL_access.username"
                   />
@@ -186,7 +186,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="password"
-                    placeholder="Input Password"
+                    placeholder="Password"
                     class="input w-full rounded-none"
                     x-model="form.keys.mySQL_access.password"
                   />
@@ -206,14 +206,14 @@ const { type, dialogId } = Astro.props;
                 x-model="category_name"
               >
                 <option disabled selected value="">
-                  Choose Services
+                  Choose Type
                 </option>
                 <option value="aws">AWS</option>
                 <option value="gcp">Google Cloud Platform</option>
                 <option value="vm">VM</option>
                 <option value="kubernetes">Kubernetes</option>
-                <option value="mysql_access">PostgreSQL Access</option>
-                <option value="postgre_access">MySQL Access</option>
+                <option value="mysql_access">PostgreSQL</option>
+                <option value="postgre_access">MySQL</option>
               </select>
             </label>
             <template x-if="category_name === 'aws'">
@@ -221,7 +221,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.resources.aws.name"
                   />
@@ -229,7 +229,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Access Key Id"
+                    placeholder="Access Key ID"
                     class="input w-full rounded-none"
                     x-model="form.resources.aws.access_key_id"
                   />
@@ -237,7 +237,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Secret Access Key"
+                    placeholder="Secret Access Key"
                     class="input w-full rounded-none"
                     x-model="form.resources.aws.secret_access_key"
                   />
@@ -249,7 +249,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.resources.gcp.name"
                   />
@@ -257,14 +257,14 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Project Id"
+                    placeholder="Project ID"
                     class="input w-full rounded-none"
                     x-model="form.resources.gcp.project_id"
                   />
                 </label>
                 <label>
                   <textarea
-                    placeholder="Input Service Account Key"
+                    placeholder="Service Account Key"
                     class="textarea w-full rounded-none"
                     x-model="form.resources.gcp.service_account_key"
                   />
@@ -276,7 +276,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.resources.vm.name"
                   />
@@ -284,14 +284,14 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input IP Address"
+                    placeholder="Host"
                     class="input w-full rounded-none"
                     x-model="form.resources.vm.ip_address"
                   />
                 </label>
                 <label>
                   <textarea
-                    placeholder="Input SSH Key"
+                    placeholder="SSH Private Key"
                     class="textarea w-full rounded-none"
                     x-model="form.resources.vm.ssh_key"
                   />
@@ -303,14 +303,14 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.resources.kubernetes.name"
                   />
                 </label>
                 <label>
                   <textarea
-                    placeholder="Input Kubeconfig"
+                    placeholder="Kubeconfig"
                     class="textarea w-full rounded-none"
                     x-model="form.resources.kubernetes.kubeconfig"
                   />
@@ -322,7 +322,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.resources.mysql_access.name"
                   />
@@ -330,7 +330,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Host IP"
+                    placeholder="Host"
                     class="input w-full rounded-none"
                     x-model="form.resources.mysql_access.host_ip"
                   />
@@ -338,7 +338,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Username"
+                    placeholder="Username"
                     class="input w-full rounded-none"
                     x-model="form.resources.mysql_access.username"
                   />
@@ -346,7 +346,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="password"
-                    placeholder="Input Password"
+                    placeholder="Password"
                     class="input w-full rounded-none"
                     x-model="form.resources.mysql_access.password"
                   />
@@ -358,7 +358,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Name"
+                    placeholder="Name"
                     class="input w-full rounded-none"
                     x-model="form.resources.postgresql_access.name"
                   />
@@ -366,7 +366,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Host IP"
+                    placeholder="Host"
                     class="input w-full rounded-none"
                     x-model="form.resources.postgresql_access.host_ip"
                   />
@@ -374,7 +374,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="text"
-                    placeholder="Input Username"
+                    placeholder="Username"
                     class="input w-full rounded-none"
                     x-model="form.resources.postgresql_access.username"
                   />
@@ -382,7 +382,7 @@ const { type, dialogId } = Astro.props;
                 <label>
                   <input
                     type="password"
-                    placeholder="Input Password"
+                    placeholder="Password"
                     class="input w-full rounded-none"
                     x-model="form.resources.postgresql_access.password"
                   />
@@ -409,8 +409,8 @@ const { type, dialogId } = Astro.props;
           google_services_account: "Create Google Services Account",
           ssh_private_key: "Create SSH Private Key",
           kubeconfig: "Create Kubeconfig",
-          postgreSQL_access: "Create PostgreSQL Access",
-          mySQL_access: "Create MySQL Access",
+          postgreSQL_access: "Create PostgreSQL",
+          mySQL_access: "Create MySQL",
         },
         keys: {
           aws_key: {

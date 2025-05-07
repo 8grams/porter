@@ -7,6 +7,7 @@ export async function up(db) {
       rotation_period TEXT,
       expired_at DATETIME,
       next_rotation DATETIME,
+      role TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );

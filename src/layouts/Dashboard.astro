@@ -18,7 +18,7 @@ const { user } = Astro.locals;
             :class="current === '/dashboard/resources' ? 'underline underline-offset-12 font-bold text-neutral' : 'text-gray-500'"
             href="/dashboard/resources"
           >
-            Resource
+            Resources
           </a>
         </li>
         <li>
@@ -29,14 +29,14 @@ const { user } = Astro.locals;
         </li>
         <li>
           <a
-            :class="current === '/dashboard/shared-keys' ? 'underline underline-offset-12 font-bold text-neutral' : 'text-gray-500'"
-            href="/dashboard/shared-keys">Shared Keys</a
+            :class="current === '/dashboard/shared-resources' ? 'underline underline-offset-12 font-bold text-neutral' : 'text-gray-500'"
+            href="/dashboard/shared-resources">Shared Resources</a
           >
         </li>
         <li>
           <a
-            :class="current === '/dashboard/shared-with-you' ? 'underline underline-offset-12 font-bold text-neutral' : 'text-gray-500'"
-            href="/dashboard/shared-with-you">Shared with you</a
+            :class="current === '/dashboard/shared-to-you' ? 'underline underline-offset-12 font-bold text-neutral' : 'text-gray-500'"
+            href="/dashboard/shared-to-you">Shared to you</a
           >
         </li>
         {user?.role === 'ADMIN' && (
