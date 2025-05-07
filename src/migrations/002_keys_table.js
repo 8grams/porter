@@ -6,6 +6,9 @@ export async function up(db) {
       name TEXT NOT NULL UNIQUE,
       username TEXT,
       password TEXT,
+      host TEXT,
+      value TEXT,
+      keyID TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -13,5 +16,5 @@ export async function up(db) {
 }
 
 export async function down(db) {
-  await db.exec('DROP TABLE keys');
-} 
+  await db.exec("DROP TABLE keys");
+}

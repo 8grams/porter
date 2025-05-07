@@ -1,0 +1,46 @@
+---
+import Forms from "../../../components/Forms.astro";
+import { openDB } from "../../../utils/db";
+
+const db = await openDB();
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const id = formData.get("id");
+  if (id) {
+    await db.run("DELETE FROM keys WHERE id = ?", [id]);
+  }
+  return Astro.redirect("/dashboard/superuser-keys");
+}
+
+const { id } = Astro.props;
+---
+
+<dialog id={`delete_modal_superkeys_${id}`} class="modal">
+  <div class="modal-box w-sm">
+    <Forms
+      class="flex flex-col gap-6"
+      method="POST"
+      action="/dashboard/superuser-keys/delete-user-keys"
+    >
+      <h2 class="card-title justify-center">Delete Superuser Keys</h2>
+      <p>Are you sure you want to delete this Superuser Keys?</p>
+      <input type="hidden" name="id" value={id} />
+      <div class="flex justify-end">
+        <button
+          type="button"
+          class="btn btn-neutral rounded-none"
+          x-on:click="$el.closest('dialog').close()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-error rounded-none ml-2 text-white"
+        >
+          Delete
+        </button>
+      </div>
+    </Forms>
+  </div>
+</dialog>

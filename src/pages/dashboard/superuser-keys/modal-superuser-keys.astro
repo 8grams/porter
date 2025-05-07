@@ -1,0 +1,274 @@
+---
+import Forms from "../../../components/Forms.astro";
+import getStringField from "../../../utils/fieldCast";
+import { openDB } from "../../../utils/db";
+
+const { dialogId } = Astro.props;
+
+const db = await openDB();
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const type = getStringField(formData, "type");
+  const id = getStringField(formData, "id");
+  const isUpdate = id !== "";
+  let query = "";
+  let values: string[] = [];
+
+  if (type === "aws_key") {
+    if (isUpdate) {
+      query =
+        "UPDATE keys SET type = ?, name = ?, keyID = ?, value = ? WHERE id = ?";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "keyID"),
+        getStringField(formData, "value"),
+        id,
+      ];
+    } else {
+      query = "INSERT INTO keys (type, name, keyID, value) VALUES (?, ?, ?, ?)";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "keyID"),
+        getStringField(formData, "value"),
+      ];
+    }
+  } else if (type === "postgreSQL_access" || type === "mySQL_access") {
+    if (isUpdate) {
+      query =
+        "UPDATE keys SET type = ?, name = ?, host = ?, username = ?, password = ? WHERE id = ?";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "host"),
+        getStringField(formData, "username"),
+        getStringField(formData, "password"),
+        id,
+      ];
+    } else {
+      query =
+        "INSERT INTO keys (type, name, host, username, password) VALUES (?, ?, ?, ?, ?)";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "host"),
+        getStringField(formData, "username"),
+        getStringField(formData, "password"),
+      ];
+    }
+  } else {
+    if (isUpdate) {
+      query = "UPDATE keys SET type = ?, name = ?, value = ? WHERE id = ?";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "value"),
+        id,
+      ];
+    } else {
+      query = "INSERT INTO keys (type, name, value) VALUES (?, ?, ?)";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "value"),
+      ];
+    }
+  }
+
+  await db.run(query, values);
+  return Astro.redirect("/dashboard/superuser-keys");
+}
+
+const getCurrentSuperuserKeys =
+  dialogId === "create"
+    ? null
+    : await db.get("SELECT * FROM keys WHERE id = ?", [dialogId]);
+---
+
+<dialog slot="dialog" class="modal" id={`modal_superuser_${dialogId}`}>
+  <div class="modal-box">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >✕</button
+      >
+    </form>
+    <Forms
+      x-data="formHandler($el.getAttribute('data-dialog-id'), $el.getAttribute('data-superuser-keys'))"
+      class="flex flex-col gap-6"
+      action="/dashboard/superuser-keys/modal-superuser-keys"
+      method="POST"
+      data-dialog-id={dialogId}
+      data-superuser-keys={JSON.stringify(getCurrentSuperuserKeys) || {}}
+    >
+      <input
+        type="hidden"
+        name="id"
+        value={getCurrentSuperuserKeys?.id || ""}
+      />
+      <div class="flex flex-col gap-4">
+        <h1
+          class="text-xl font-bold"
+          x-text="titles[category_name] ? `${titles[category_name]} - ${typeDialog}` : typeDialog"
+        >
+        </h1>
+        <label>
+          <input type="hidden" name="type" :value="category_name" />
+          <select
+            class="select
+          rounded-none
+          w-full"
+            x-model="category_name"
+            x-bind:disabled="typeDialog!=='Create'"
+          >
+            <option disabled selected value=""> Choose Type </option>
+            <option value="aws_key">AWS Key</option>
+            <option value="google_services_account">
+              Google Services Account
+            </option>
+            <option value="ssh_private_key">SSH Private Key</option>
+            <option value="kubeconfig">Kubeconfig</option>
+            <option value="postgreSQL_access">PostgreSQL Access</option>
+            <option value="mySQL_access">MySQL Access</option>
+          </select>
+        </label>
+        <div class="flex flex-col gap-6">
+          <template x-if="category_name !== ''">
+            <label>
+              <input
+                type="text"
+                placeholder="Name"
+                name="name"
+                class="input w-full rounded-none"
+                required
+                value={getCurrentSuperuserKeys?.name || ""}
+              />
+            </label>
+          </template>
+          <template x-if="category_name === 'aws_key'">
+            <div class="flex flex-col gap-6">
+              <label>
+                <textarea
+                  class="textarea w-full rounded-none"
+                  name="keyID"
+                  required
+                  placeholder="Input Key Id"
+                  value={getCurrentSuperuserKeys?.value}
+                  >{getCurrentSuperuserKeys?.value}</textarea
+                >
+              </label>
+              <label>
+                <textarea
+                  class="textarea w-full rounded-none"
+                  name="value"
+                  required
+                  placeholder="Input Secret Key"
+                  value={getCurrentSuperuserKeys?.value}
+                  >{getCurrentSuperuserKeys?.value}</textarea
+                >
+              </label>
+            </div>
+          </template>
+          <template x-if="category_name === 'google_services_account'">
+            <label>
+              <textarea
+                class="textarea w-full rounded-none"
+                name="value"
+                required
+                placeholder="Input Service Account Key"
+                value={getCurrentSuperuserKeys?.value}
+                >{getCurrentSuperuserKeys?.value}</textarea
+              >
+            </label>
+          </template>
+          <template x-if="category_name === 'ssh_private_key'">
+            <label>
+              <textarea
+                class="textarea w-full rounded-none"
+                name="value"
+                required
+                placeholder="Input SSH Private Key"
+                value={getCurrentSuperuserKeys?.value}
+                >{getCurrentSuperuserKeys?.value}</textarea
+              >
+            </label>
+          </template>
+          <template x-if="category_name === 'kubeconfig'">
+            <label>
+              <textarea
+                class="textarea w-full rounded-none"
+                name="value"
+                required
+                placeholder="Input Kubeconfig"
+                value={getCurrentSuperuserKeys?.value}
+                >{getCurrentSuperuserKeys?.value}</textarea
+              >
+            </label>
+          </template>
+          <template
+            x-if="category_name === 'postgreSQL_access' || category_name === 'mySQL_access'"
+          >
+            <div class="flex flex-col gap-6">
+              <label>
+                <input
+                  type="text"
+                  placeholder="Host"
+                  name="host"
+                  required
+                  value={getCurrentSuperuserKeys?.host || ""}
+                  class="input w-full rounded-none"
+                />
+              </label>
+              <label>
+                <input
+                  type="text"
+                  placeholder="Username"
+                  name="username"
+                  required
+                  value={getCurrentSuperuserKeys?.username || ""}
+                  class="input w-full rounded-none"
+                />
+              </label>
+              <label>
+                <input
+                  type="password"
+                  placeholder="Password"
+                  name="password"
+                  required
+                  value={getCurrentSuperuserKeys?.password || ""}
+                  class="input w-full rounded-none"
+                />
+              </label>
+            </div>
+          </template>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-neutral rounded-none w-full">
+        Save
+      </button>
+    </Forms>
+  </div>
+</dialog>
+<script slot="script" is:inline>
+  function formHandler(dialogId, getCurrentSuperuserKeys) {
+    let parsedKeys = {};
+    try {
+      parsedKeys = JSON.parse(getCurrentSuperuserKeys || "{}");
+    } catch (e) {
+      console.error("Failed to parse superuser keys:", e);
+    }
+    return {
+      typeDialog: dialogId === "create" ? "Create" : "Update",
+      category_name: dialogId === "create" ? "" : parsedKeys?.type,
+      titles: {
+        aws_key: "AWS Key",
+        google_services_account: "Google Services Account",
+        ssh_private_key: "SSH Private Key",
+        kubeconfig: "Kubeconfig",
+        postgreSQL_access: "PostgreSQL",
+        mySQL_access: "MySQL",
+      },
+    };
+  }
+</script>
