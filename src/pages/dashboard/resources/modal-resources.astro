@@ -1,0 +1,312 @@
+---
+import Forms from "../../../components/Forms.astro";
+import { openDB } from "../../../utils/db";
+import getStringField from "../../../utils/fieldCast";
+
+const db = await openDB();
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const type = getStringField(formData, "type");
+  const id = getStringField(formData, "id");
+  const isUpdate = id !== "";
+  let query = "";
+  let values: string[] = [];
+
+  if (type === "aws_iam" || type === "google_iam") {
+    if (isUpdate) {
+      query =
+        "UPDATE resources SET type = ?, name = ?, keyID = ?, value = ? WHERE id = ?";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "keyID"),
+        getStringField(formData, "value"),
+        id,
+      ];
+    } else {
+      query =
+        "INSERT INTO resources (type, name, keyID, value) VALUES (?, ?, ?, ?)";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "keyID"),
+        getStringField(formData, "value"),
+      ];
+    }
+  } else if (type === "postgresSQL_access" || type === "mySQL_access") {
+    if (isUpdate) {
+      query =
+        "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ? WHERE id = ?";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "host"),
+        getStringField(formData, "username"),
+        getStringField(formData, "password"),
+        id,
+      ];
+    } else {
+      query =
+        "INSERT INTO resources (type, name, host, username, password) VALUES (?, ?, ?, ?, ?)";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "host"),
+        getStringField(formData, "username"),
+        getStringField(formData, "password"),
+      ];
+    }
+  } else if (type === "vm") {
+    if (isUpdate) {
+      query =
+        "UPDATE resources SET type = ?, name = ?, host = ?, value = ? WHERE id = ?";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "host"),
+        getStringField(formData, "value"),
+        id,
+      ];
+    } else {
+      query =
+        "INSERT INTO resources (type, name, host, value) VALUES (?, ?, ?, ?)";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "host"),
+        getStringField(formData, "value"),
+      ];
+    }
+  } else {
+    if (isUpdate) {
+      query = "UPDATE resources SET type = ?, name = ?, value = ? WHERE id = ?";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "value"),
+        id,
+      ];
+    } else {
+      query = "INSERT INTO resources (type, name, value) VALUES (?, ?, ?)";
+      values = [
+        type,
+        getStringField(formData, "name"),
+        getStringField(formData, "value"),
+      ];
+    }
+  }
+  await db.run(query, values);
+  return Astro.redirect("/dashboard/resources");
+}
+
+const { id } = Astro.props;
+
+const getCurrentResources =
+  id === "create"
+    ? null
+    : await db.get("SELECT * FROM resources WHERE id = ?", [id]);
+---
+
+<dialog slot="dialog" class="modal" id={`modal_resources_${id}`}>
+  <div class="modal-box">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >✕</button
+      >
+    </form>
+    <Forms
+      class="flex flex-col gap-6"
+      method="POST"
+      data-dialog-id={id}
+      data-current-resources={JSON.stringify(getCurrentResources) || {}}
+      action="/dashboard/resources/modal-resources"
+      x-data="formHandler($el.getAttribute('data-dialog-id'), $el.getAttribute('data-current-resources'))"
+    >
+      <div class="flex flex-col gap-4">
+        <h1
+          class="text-xl font-bold"
+          x-text="titles[category_name] ? `${titles[category_name]} - ${typeDialog}` : typeDialog"
+        >
+        </h1>
+        <input type="hidden" name="id" value={getCurrentResources?.id || ""} />
+        <label>
+          <input type="hidden" name="type" :value="category_name" />
+          <select
+            class="select
+          rounded-none
+          w-full"
+            x-model="category_name"
+          >
+            <option disabled selected value="">Choose Type</option>
+            <option value="aws_iam">AWS IAM</option>
+            <option value="google_iam"> Google IAM </option>
+            <option value="vm">VM</option>
+            <option value="kubernetes">Kubernetes</option>
+            <option value="postgresSQL_access">PostgresSQL Access</option>
+            <option value="mySQL_access">MySQL Access</option>
+          </select>
+        </label>
+        <div class="flex flex-col gap-6">
+          <template x-if="category_name !== ''">
+            <label>
+              <input
+                type="text"
+                placeholder="Name"
+                name="name"
+                class="input w-full rounded-none"
+                required
+                value={getCurrentResources?.name || ""}
+              />
+            </label>
+          </template>
+          <template x-if="category_name === 'aws_iam'">
+            <div class="flex flex-col gap-6">
+              <label>
+                <textarea
+                  class="textarea w-full rounded-none"
+                  name="keyID"
+                  required
+                  placeholder="Input Key Id"
+                  value={getCurrentResources?.value}
+                  >{getCurrentResources?.value}</textarea
+                >
+              </label>
+              <label>
+                <textarea
+                  class="textarea w-full rounded-none"
+                  name="value"
+                  required
+                  placeholder="Input Secret Key"
+                  value={getCurrentResources?.value}
+                  >{getCurrentResources?.value}</textarea
+                >
+              </label>
+            </div>
+          </template>
+          <template x-if="category_name === 'google_iam'">
+            <div class="flex flex-col gap-6">
+              <label>
+                <input
+                  type="text"
+                  placeholder="Project ID"
+                  name="keyID"
+                  class="input w-full rounded-none"
+                  required
+                  value={getCurrentResources?.keyID || ""}
+                />
+              </label>
+              <label>
+                <textarea
+                  class="textarea w-full rounded-none"
+                  name="value"
+                  required
+                  placeholder="Service Account Key"
+                  value={getCurrentResources?.value}
+                  >{getCurrentResources?.value}</textarea
+                >
+              </label>
+            </div>
+          </template>
+          <template x-if="category_name === 'vm'">
+            <div class="flex flex-col gap-6">
+              <label>
+                <input
+                  type="text"
+                  placeholder="IP Address"
+                  name="host"
+                  required
+                  value={getCurrentResources?.host || ""}
+                  class="input w-full rounded-none"
+                />
+              </label>
+              <label>
+                <textarea
+                  class="textarea w-full rounded-none"
+                  name="value"
+                  required
+                  placeholder="SSH Key"
+                  value={getCurrentResources?.value}
+                  >{getCurrentResources?.value}</textarea
+                >
+              </label>
+            </div>
+          </template>
+          <template x-if="category_name === 'kubernetes'">
+            <label>
+              <textarea
+                class="textarea w-full rounded-none"
+                name="value"
+                required
+                placeholder="Input Kubeconfig"
+                value={getCurrentResources?.value}
+                >{getCurrentResources?.value}</textarea
+              >
+            </label>
+          </template>
+          <template
+            x-if="category_name === 'postgresSQL_access' || category_name === 'mySQL_access'"
+          >
+            <div class="flex flex-col gap-6">
+              <label>
+                <input
+                  type="text"
+                  placeholder="Host"
+                  name="host"
+                  required
+                  value={getCurrentResources?.host || ""}
+                  class="input w-full rounded-none"
+                />
+              </label>
+              <label>
+                <input
+                  type="text"
+                  placeholder="Username"
+                  name="username"
+                  required
+                  value={getCurrentResources?.username || ""}
+                  class="input w-full rounded-none"
+                />
+              </label>
+              <label>
+                <input
+                  type="password"
+                  placeholder="Password"
+                  name="password"
+                  required
+                  value={getCurrentResources?.password || ""}
+                  class="input w-full rounded-none"
+                />
+              </label>
+            </div>
+          </template>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-neutral rounded-none w-full">
+        Save
+      </button>
+    </Forms>
+  </div>
+</dialog>
+<script slot="script" is:inline>
+  function formHandler(dialogId, getCurrentResources) {
+    let parsedKeys = {};
+    try {
+      parsedKeys = JSON.parse(getCurrentResources || "{}");
+    } catch (e) {
+      console.error("Failed to parse superuser keys:", e);
+    }
+    return {
+      typeDialog: dialogId === "create" ? "Create" : "Update",
+      category_name: dialogId === "create" ? "" : parsedKeys?.type,
+      titles: {
+        aws_iam: "AWS IAM",
+        google_iam: "Google IAM",
+        vm: "VM",
+        kubernetes: "Kubernetes",
+        postgresSQL_access: "PostgresSQL",
+        mySQL_access: "MySQL",
+      },
+    };
+  }
+</script>

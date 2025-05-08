@@ -1,9 +1,35 @@
 ---
 import Dashboard from "../../../layouts/Dashboard.astro";
-import ModalForms from "../../../components/ModalForms.astro";
-import { ICONS } from "../../../constants";
-import SharedTo from "../../../components/SharedTo.astro";
-import ShareResource from "../../../components/ShareResource.astro";
+import { ICONS, ServicesIcons } from "../../../constants";
+import ModalResources from "./modal-resources.astro";
+import { openDB } from "../../../utils/db";
+import Services from "../../../utils/services";
+import DeleteResources from "./delete-resources.astro";
+
+const db = await openDB();
+
+const type = Astro.url.searchParams.get("type") || "";
+const search = Astro.url.searchParams.get("search") || "";
+
+let resources = [];
+if (type === "all_types") {
+  if (search) {
+    resources = await db.all(`SELECT * FROM resources WHERE name LIKE ?`, [
+      `%${search}%`,
+    ]);
+  } else {
+    resources = await db.all(`SELECT * FROM resources`);
+  }
+} else {
+  if (search) {
+    resources = await db.all(
+      `SELECT * FROM resources WHERE type = ? AND name LIKE ?`,
+      [type, `%${search}%`],
+    );
+  } else {
+    resources = await db.all(`SELECT * FROM resources WHERE type = ?`, [type]);
+  }
+}
 ---
 
 <Dashboard pageTitle="Resource">
@@ -14,86 +40,216 @@ import ShareResource from "../../../components/ShareResource.astro";
     <div class="flex justify-between items-center gap-4 flex-wrap">
       <h2 class="text-xl font-semibold">Resources</h2>
       <div class="flex items-center gap-4">
-        <label class="input rounded-none w-[220px]">
-          <svg
-            class="h-[1em] opacity-50"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-          >
-            <g
-              stroke-linejoin="round"
-              stroke-linecap="round"
-              stroke-width="2.5"
-              fill="none"
-              stroke="currentColor"
+        <div
+          x-data="{
+          search: new URLSearchParams(window.location.search).get('search') || '',
+          updateSearch() {
+            const params = new URLSearchParams(window.location.search);
+            if (this.search) {
+              params.set('search', this.search);
+            } else {
+              params.delete('search');
+            }
+            window.location.search = params.toString();
+          }
+  }"
+        >
+          <label class="input rounded-none w-[220px]">
+            <svg
+              class="h-[1em] opacity-50"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
             >
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.3-4.3"></path>
-            </g>
-          </svg>
-          <input type="search" class="grow" placeholder="Search" />
-        </label>
-        <label class="w-[160px]">
-          <select class="select w-full rounded-none">
-            <option disabled selected>All Types</option>
-            <option>Kubernetes</option>
-            <option>Google IAM</option>
-            <option>VM</option>
+              <g
+                stroke-linejoin="round"
+                stroke-linecap="round"
+                stroke-width="2.5"
+                fill="none"
+                stroke="currentColor"
+              >
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </g>
+            </svg>
+
+            <input
+              type="search"
+              class="grow"
+              placeholder="Search"
+              name="search"
+              x-model="search"
+              @keydown.enter.prevent="updateSearch"
+            />
+          </label>
+        </div>
+        <label
+          x-data="{
+            type: '',
+            updateQueryParam() {
+              const params = new URLSearchParams(window.location.search);
+              if (this.type) {
+                params.set('type', this.type);
+              } else {
+                params.delete('type');
+              }
+              window.location.search = params.toString();
+            }
+          }"
+          x-init="type = new URLSearchParams(window.location.search).get('type') || 'all_types'"
+        >
+          <select
+            class="select rounded-none w-full"
+            name="type"
+            @change="updateQueryParam"
+            x-model="type"
+          >
+            <option value="all_types">All Types</option>
+            <option value="aws_iam">AWS Key</option>
+            <option value="google_iam"> Google IAM </option>
+            <option value="vm">VM</option>
+            <option value="kubeconfig">Kubeconfig</option>
+            <option value="postgresSQL_access">PostgresSQL Access</option>
+            <option value="mySQL_access">MySQL Access</option>
           </select>
         </label>
         <button
           class="btn btn-neutral rounded-none w-[140px]"
-          onclick="resource.showModal()"
+          onclick="modal_resources_create.showModal()"
         >
-        Create
+          Create
         </button>
+        <ModalResources id="create" />
       </div>
     </div>
-    <div class="grid grid-cols-4">
-      <div class="card card-border bg-white rounded-none">
-        <div class="card-body flex flex-col gap-4">
-          <div class="flex justify-between">
-            <h2 class="card-title">8grams</h2>
-            <button
-              class="cursor-pointer flex items-center justify-end"
-              onclick="sharedto.showModal()"
-            >
-              <ICONS.openInNew class="fill-black w-5 h-5" />
-            </button>
-          </div>
-          <div class="flex flex-col gap-3">
-            <div class="flex items-center justify-between gap-4">
-              <p class="text-gray-700">Type</p>
-              <p class="text-right">Virtual Machine</p>
-            </div>
-
-            <div class="flex items-center justify-between gap-4">
-              <p class="text-gray-700">IP</p>
-              <p class="text-right">127.0.0.1</p>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <p class="text-gray-700">Open in console</p>
-              <a href="#" class="flex items-center justify-end">
-                <ICONS.terminal class="fill-black w-5 h-5" />
-              </a>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <p class="text-gray-700">Share resource</p>
-              <button
-                class="cursor-pointer flex items-center justify-end"
-                onclick="shareresource.showModal()"
-              >
-                <ICONS.share class="fill-black w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="grid grid-cols-5 gap-6">
+      {
+        resources.length > 0 &&
+          resources.map((resource) => {
+            const IconComponent =
+              ServicesIcons[resource.type as keyof typeof ServicesIcons];
+            return (
+              <div class="card card-border bg-white rounded-none w-full">
+                <div class="card-body flex flex-col justify-between gap-4">
+                  <div class="flex flex-col gap-4">
+                    <div class="flex justify-between">
+                      <h2 class="card-title">{resource.name}</h2>
+                      <IconComponent class="w-10 h-10" />
+                    </div>
+                    <div class="flex flex-col gap-3">
+                      <div class="flex items-center justify-between gap-4">
+                        <p class="text-gray-700">Type</p>
+                        <p class="text-right">
+                          {Services[resource.type as keyof typeof Services]}
+                        </p>
+                      </div>
+                      {resource.type === "vm" && (
+                        <div class="flex items-center justify-between gap-4">
+                          <p class="text-gray-700">IP</p>
+                          <p class="text-right">{resource.host}</p>
+                        </div>
+                      )}
+                      {[
+                        "vm",
+                        "kubernetes",
+                        "mySQL_access",
+                        "postgresSQL_access",
+                      ].includes(resource.type) && (
+                        <div class="flex items-center justify-between gap-4">
+                          <p class="text-gray-700">Open in console</p>
+                          <a href="#" class="flex items-center justify-end">
+                            <ICONS.terminal class="fill-black w-5 h-5" />
+                          </a>
+                        </div>
+                      )}
+                      {resource.type === "kubernetes" && (
+                        <div class="flex items-center justify-between gap-4">
+                          <p class="text-gray-700">Kubeconfig</p>
+                          <p
+                            class="text-gray-700 truncate max-w-xs"
+                            title={resource.value}
+                          >
+                            {resource.value}
+                          </p>
+                        </div>
+                      )}
+                      {["mySQL_access", "postgresSQL_access"].includes(
+                        resource.type,
+                      ) && (
+                        <div class="flex flex-col gap-3">
+                          <div class="flex justify-between items-center gap-4">
+                            <p class="text-gray-700">Host</p>
+                            <p class="text-gray-700 text-right">
+                              {resource.host}
+                            </p>
+                          </div>
+                          <div class="flex justify-between items-center gap-4">
+                            <p class="text-gray-700">Username</p>
+                            <p class="text-gray-700 text-right">
+                              {resource.username}
+                            </p>
+                          </div>
+                          <div
+                            x-data="{ show: false, password: '' }"
+                            x-init="password = $el.dataset.password"
+                            data-password={resource.password}
+                            class="flex justify-between items-center gap-4"
+                          >
+                            <p class="text-gray-700">Password</p>
+                            <div class="flex items-center gap-2">
+                              <p class="text-gray-700 text-right">
+                                <span x-text="show ? password : '••••••••'" />
+                              </p>
+                              <button type="button" @click="show = !show">
+                                <template x-if="show">
+                                  <ICONS.eyeclose class="w-5 h-5" />
+                                </template>
+                                <template x-if="!show">
+                                  <ICONS.eye class="w-5 h-5" />
+                                </template>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div class="flex items-center justify-between gap-4">
+                        <p class="text-gray-700">Share resource</p>
+                        <button class="cursor-pointer flex items-center justify-end">
+                          <ICONS.share class="fill-black w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <button
+                      class="btn btn-neutral rounded-none w-full btn-soft"
+                      data-id={resource.id}
+                      onclick="document.getElementById('modal_resources_' + this.dataset.id).showModal()"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      class="btn btn-error rounded-none w-full btn-soft"
+                      data-id={resource.id}
+                      onclick="document.getElementById('delete_resource_modal_' + this.dataset.id).showModal()"
+                    >
+                      Delete
+                    </button>
+                    <DeleteResources id={resource.id} />
+                    <ModalResources id={resource.id} />
+                  </div>
+                </div>
+              </div>
+            );
+          })
+      }
     </div>
   </section>
-  <div slot="dialog">
-    <ModalForms dialogId="resource" slot="dialog" type="resources" />
-    <SharedTo />
-    <ShareResource />
-  </div>
 </Dashboard>
+<script is:inline>
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("type")) {
+    params.set("type", "all_types");
+
+    window.location.search = params.toString();
+  }
+</script>

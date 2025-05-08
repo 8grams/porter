@@ -1,0 +1,47 @@
+---
+import Forms from "../../../components/Forms.astro";
+import { openDB } from "../../../utils/db";
+
+const db = await openDB();
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const userId = formData.get("id");
+
+  if (userId) {
+    await db.run("DELETE FROM resources WHERE id = ?", [userId]);
+  }
+  return Astro.redirect("/dashboard/resources");
+}
+
+const { id } = Astro.props;
+---
+
+<dialog id={`delete_resource_modal_${id}`} class="modal">
+  <div class="modal-box w-sm">
+    <Forms
+      class="flex flex-col gap-6"
+      method="POST"
+      action="/dashboard/resources/delete-resources"
+    >
+      <h2 class="card-title justify-center">Delete Resources</h2>
+      <p>Are you sure you want to delete this resource?</p>
+      <input type="hidden" name="id" value={id} />
+      <div class="flex justify-end">
+        <button
+          type="button"
+          class="btn btn-neutral rounded-none"
+          onclick="this.closest('dialog').close()"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn btn-error rounded-none ml-2 text-white"
+        >
+          Delete
+        </button>
+      </div>
+    </Forms>
+  </div>
+</dialog>

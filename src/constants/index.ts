@@ -4,6 +4,14 @@ import OpenInNew from "../assets/icons/open_in_new.svg";
 import Delete from "../assets/icons/delete.svg";
 import Share from "../assets/icons/share.svg";
 import Edit from "../assets/icons/edit.svg";
+import GCP from "../assets/icons/google-cloud.svg";
+import AWSIam from "../assets/icons/aws_iam.svg";
+import vmware from "../assets/icons/vmware.svg";
+import kubernetes from "../assets/icons/kubernetes.svg";
+import mysql from "../assets/icons/mysql.svg";
+import postgresSQL from "../assets/icons/postgresql.svg";
+import eye from "../assets/icons/eye.svg";
+import eyeclose from "../assets/icons/eye-close.svg";
 
 export const ICONS = {
   terminal: Terminal,
@@ -12,4 +20,15 @@ export const ICONS = {
   delete: Delete,
   share: Share,
   edit: Edit,
+  eye: eye,
+  eyeclose: eyeclose,
+};
+
+export const ServicesIcons = {
+  google_iam: GCP,
+  aws_iam: AWSIam,
+  vm: vmware,
+  kubernetes: kubernetes,
+  mySQL_access: mysql,
+  postgresSQL_access: postgresSQL,
 };

@@ -5,6 +5,10 @@ const Services = {
   kubeconfig: "Kubeconfig",
   postgreSQL_access: "PostgreSQL Access",
   mySQL_access: "MySQL Access",
+  google_iam: "Google IAM",
+  aws_iam: "AWS IAM",
+  vm: "VM",
+  kubernetes: "Kubernetes",
 };
 
 export default Services;
