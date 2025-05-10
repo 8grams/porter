@@ -13,7 +13,7 @@ const { access_token } = await (
   })
 ).json();
 
-const { email } = await (
+const { email, name, picture } = await (
   await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
     headers: { Authorization: `Bearer ${access_token}` },
   })
@@ -27,9 +27,16 @@ const eligibleUsers = await db.get(
 if (!eligibleUsers) {
   return Astro.redirect("/login?unauthorized=1");
 }
+await db.run("UPDATE eligible_users SET name = ?, avatar = ? WHERE email = ?", [
+  name,
+  picture,
+  email,
+]);
 Astro?.session?.set("user", {
   email: eligibleUsers.email,
   role: "USER",
+  name: eligibleUsers.name,
+  avatar: eligibleUsers.avatar,
 });
 return Astro.redirect("/dashboard/resources");
 ---

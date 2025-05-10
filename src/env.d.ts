@@ -3,6 +3,8 @@ declare namespace App {
     user?: {
       role: string;
       email: string;
+      name: string;
+      avatar: string;
     };
   }
 }

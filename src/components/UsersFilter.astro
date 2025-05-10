@@ -1,0 +1,273 @@
+---
+const { eligibleUsers } = Astro.props;
+---
+
+<div
+  x-data="multiDropdown($el.getAttribute('data-users'))"
+  class="relative w-full"
+  data-users={JSON.stringify(eligibleUsers)}
+>
+  <div class="relative">
+    <div
+      class="input input-bordered w-full rounded-none h-[42px] flex items-center gap-2 flex-wrap py-0 px-3 cursor-pointer"
+      @click="toggleDropdown()"
+    >
+      <div class="flex items-center gap-2 h-full overflow-hidden">
+        <template x-for="(item, idx) in selectedItems.slice(0, 2)" :key="idx">
+          <div
+            class="bg-gray-200 rounded-md px-2 py-0.5 flex items-center gap-1 text-sm"
+          >
+            <img :src="item.avatar" class="h-4 w-4 rounded-full mr-1" />
+            <span x-text="item.name || item.email"></span>
+            <button
+              type="button"
+              @click.stop="removeItem(item)"
+              class="text-gray-500 hover:text-gray-700"
+            >
+              &times;
+            </button>
+          </div>
+        </template>
+        <div
+          x-show="selectedItems.length > 2"
+          class="bg-blue-100 text-blue-800 rounded-md px-2 py-0.5 text-sm font-medium"
+        >
+          +<span x-text="selectedItems.length - 2"></span> more
+        </div>
+        <div x-show="selectedItems.length === 0" class="text-gray-500">
+          Share to
+        </div>
+      </div>
+      <input
+        type="hidden"
+        name="share_to"
+        :value="JSON.stringify(selectedItems.map(item => item.id))"
+      />
+    </div>
+  </div>
+  <div
+    x-cloak
+    x-show="open"
+    x-transition:enter="transition ease-out duration-100"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-75"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    @click.away="open = false"
+    class="absolute z-10 mt-1 w-full bg-white border border-gray-200 shadow-lg overflow-hidden dropdown-container"
+  >
+    <div class="p-2 border-b border-gray-100">
+      <input
+        type="text"
+        placeholder="Search users..."
+        x-model="search"
+        x-ref="searchInput"
+        @input="filterOptions()"
+        @keydown.arrow-down.prevent="moveDown()"
+        @keydown.arrow-up.prevent="moveUp()"
+        @keydown.enter.prevent="selectOption()"
+        @keydown.escape.prevent="open = false"
+        class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        autocomplete="off"
+      />
+    </div>
+    <div
+      x-show="selectedItems.length > 0"
+      class="px-4 py-2 bg-gray-50 border-b border-gray-200"
+    >
+      <div class="flex items-center justify-between">
+        <span class="text-sm text-gray-600"
+          ><span x-text="selectedItems.length"></span> user<span
+            x-show="selectedItems.length !== 1">s</span
+          > selected</span
+        >
+        <button
+          @click.stop="clearSelection()"
+          type="button"
+          class="text-xs text-blue-600 hover:text-blue-800 font-medium"
+        >
+          Clear all
+        </button>
+      </div>
+    </div>
+    <div class="max-h-60 overflow-y-auto py-2">
+      <template x-for="(option, index) in filteredOptions" :key="option.id">
+        <li
+          :class="{
+            'bg-gray-100': index === highlightedIndex,
+            'bg-blue-50': isItemSelected(option),
+            'cursor-pointer hover:bg-gray-50 dropdown-item': true
+          }"
+          @click="toggleSelect(option)"
+          @mouseenter="highlightedIndex = index"
+          style="list-style-type: none;"
+        >
+          <div class="flex items-center gap-3 py-3 px-4">
+            <div class="flex-shrink-0">
+              <img
+                :src="option.avatar"
+                :alt="option.name"
+                class="w-8 h-8 rounded-full object-cover"
+                onerror="this.onerror=null; this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2232%22%20height%3D%2232%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2216%22%20fill%3D%22%23cbd5e1%22%2F%3E%3Ctext%20x%3D%2216%22%20y%3D%2220%22%20font-size%3D%2212%22%20text-anchor%3D%22middle%22%20fill%3D%22%236b7280%22%3E' + option.name.charAt(0).toUpperCase() + '%3C%2Ftext%3E%3C%2Fsvg%3E';"
+              />
+            </div>
+            <div class="flex-grow">
+              <div class="font-medium" x-text="option.name"></div>
+              <div class="text-sm text-gray-500" x-text="option.email"></div>
+            </div>
+          </div>
+        </li>
+      </template>
+      <li
+        x-show="filteredOptions.length === 0"
+        class="px-4 py-4 text-gray-500 text-center"
+        style="list-style-type: none;"
+      >
+        No users found
+      </li>
+    </div>
+    <div
+      x-show="selectedItems.length > 0"
+      class="px-4 py-3 border-t border-gray-100 bg-gray-50"
+    >
+      <div class="flex flex-wrap gap-1">
+        <template
+          x-for="(item, idx) in selectedItems"
+          :key="'selected-'+item.id"
+        >
+          <div
+            class="bg-blue-100 text-blue-800 text-xs rounded px-2 py-2 flex items-center gap-1"
+          >
+            <img :src="item.avatar" class="h-4 w-4 rounded-full" />
+            <span x-text="item.name || item.email"></span>
+            <button
+              @click.stop="removeItem(item)"
+              class="text-blue-600 hover:text-blue-800">&times;</button
+            >
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    [x-cloak] {
+      display: none !important;
+    }
+
+    ul,
+    li {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .dropdown-item:not(:last-child) {
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .dropdown-item {
+      transition: background-color 0.2s ease;
+    }
+
+    .dropdown-container {
+      box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border-radius: 0.375rem;
+    }
+  </style>
+</div>
+
+<script slot="script">
+  function multiDropdown(eligibleUsers) {
+    const users = JSON.parse(eligibleUsers);
+
+    return {
+      search: "",
+      options: users,
+      filteredOptions: [],
+      selectedItems: [],
+      open: false,
+      highlightedIndex: 0,
+
+      init() {
+        this.filteredOptions = [...this.options];
+      },
+
+      toggleDropdown() {
+        this.open = !this.open;
+        if (this.open) {
+          this.search = "";
+          this.filterOptions();
+          setTimeout(() => {
+            this.$refs.searchInput.focus();
+          }, 50);
+        }
+      },
+
+      filterOptions() {
+        if (this.search === "") {
+          this.filteredOptions = [...this.options];
+        } else {
+          const searchLower = this.search.toLowerCase();
+          this.filteredOptions = this.options.filter(
+            (user) =>
+              user.name.toLowerCase().includes(searchLower) ||
+              user.email.toLowerCase().includes(searchLower),
+          );
+        }
+        this.highlightedIndex = 0;
+      },
+
+      isItemSelected(item) {
+        return this.selectedItems.some((selected) => selected.id === item.id);
+      },
+
+      toggleSelect(item) {
+        const index = this.selectedItems.findIndex(
+          (selected) => selected.id === item.id,
+        );
+
+        if (index !== -1) {
+          // Remove if already selected
+          this.selectedItems.splice(index, 1);
+        } else {
+          // Add if not selected
+          this.selectedItems.push(item);
+        }
+
+        this.$refs.searchInput.focus();
+      },
+
+      removeItem(item) {
+        this.selectedItems = this.selectedItems.filter((i) => i.id !== item.id);
+      },
+
+      clearSelection() {
+        this.selectedItems = [];
+        this.filterOptions();
+        this.$refs.searchInput.focus();
+      },
+
+      moveDown() {
+        if (this.highlightedIndex < this.filteredOptions.length - 1) {
+          this.highlightedIndex++;
+        }
+      },
+
+      moveUp() {
+        if (this.highlightedIndex > 0) {
+          this.highlightedIndex--;
+        }
+      },
+
+      selectOption() {
+        if (this.filteredOptions.length > 0) {
+          this.toggleSelect(this.filteredOptions[this.highlightedIndex]);
+        }
+      },
+    };
+  }
+</script>

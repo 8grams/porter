@@ -14,6 +14,8 @@ export async function up(db) {
     CREATE TABLE eligible_users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
+      avatar TEXT,
+      name TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -21,6 +23,6 @@ export async function up(db) {
 }
 
 export async function down(db) {
-  await db.exec('DROP TABLE users');
-  await db.exec('DROP TABLE eligible_users');
-} 
+  await db.exec("DROP TABLE users");
+  await db.exec("DROP TABLE eligible_users");
+}

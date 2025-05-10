@@ -1,6 +1,7 @@
 ---
 import Layout from "./Layout.astro";
 import Forms from "../components/Forms.astro";
+import { Picture } from 'astro:assets';
 const { pageTitle } = Astro.props;
 
 const { user } = Astro.locals;
@@ -82,37 +83,48 @@ const { user } = Astro.locals;
       </ul>
 
       <div class="relative" x-data="{ open: false }">
-        <button class="btn btn-ghost" @click="open = !open">
-          {user?.email}
-          <svg
-            class="ml-2 w-4 h-4 transition-transform"
-            :class="open ? 'rotate-180' : ''"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+          <button class="btn btn-ghost flex items-center gap-2" @click="open = !open">
+            {user?.avatar && (
+              <Picture
+                src={user?.avatar as string}
+                alt={user?.name as string}
+                width="30"
+                height="30"
+                class="rounded-full"
+                quality={100}
+
+              />
+            )}
+            <span>{user?.name}</span>
+            <svg
+              class="ml-2 w-4 h-4 transition-transform"
+              :class="open ? 'rotate-180' : ''"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+          <ul
+            class="menu menu-md dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52 absolute right-0 z-50"
+            x-show="open"
+            x-transition
+            @click.outside="open = false"
+            x-cloak
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        <ul
-          class="menu menu-md dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52 absolute right-0 z-50"
-          x-show="open"
-          x-transition
-          @click.outside="open = false"
-          x-cloak
-        >
-          <li>
-            <Forms method="POST" action="/logout">
-              <button type="submit">Logout</button>
-            </Forms>
-          </li>
-        </ul>
-      </div>
+            <li>
+              <Forms method="POST" action="/logout">
+                <button type="submit">Logout</button>
+              </Forms>
+            </li>
+          </ul>
+        </div>
     </div>
   </nav>
   <main class="py-6 px-6">

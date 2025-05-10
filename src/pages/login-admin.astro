@@ -14,6 +14,8 @@ if (Astro.request.method === "POST") {
     Astro?.session?.set("user", {
       email: data.get("email"),
       role: "ADMIN",
+      name: "ADMIN",
+      avatar: null,
     });
     return Astro.redirect("/dashboard/resources");
   } else {

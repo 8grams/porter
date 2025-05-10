@@ -1,0 +1,132 @@
+---
+import Forms from "../../../components/Forms.astro";
+import UsersFilter from "../../../components/UsersFilter.astro";
+import { openDB } from "../../../utils/db";
+import getStringField from "../../../utils/fieldCast";
+import calculateExpiryDate from "../../../utils/rotationDate";
+import { parseStringArray } from "../../../utils/helpers";
+
+const { resourceId } = Astro.props;
+
+const db = await openDB();
+
+if (Astro.request.method === "POST") {
+  const formData = await Astro.request.formData();
+  const resourceId = getStringField(formData, "resource_id");
+  const role = getStringField(formData, "role");
+  const rotationPeriod = getStringField(formData, "rotation_period");
+  const expired_at = getStringField(formData, "expired_at");
+  const next_rotation = calculateExpiryDate(rotationPeriod, expired_at);
+  const share_to = getStringField(formData, "share_to");
+  const share_to_array = parseStringArray(share_to);
+
+  for (let i = 0; i < share_to_array.length; i++) {
+    const userId = share_to_array[i];
+    await db.run(
+      "INSERT INTO shares (resource_id, share_to, role, expired_at, next_rotation, rotation_period) VALUES (?, ?, ?, ?, ?, ?)",
+      [resourceId, userId, role, expired_at, next_rotation, rotationPeriod],
+    );
+  }
+
+  return Astro.redirect("/dashboard/resources");
+}
+
+const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
+---
+
+<dialog id={`share_resource_${resourceId}`} class="modal">
+  <div class="modal-box">
+    <form method="dialog">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+        >✕</button
+      >
+    </form>
+    <Forms
+      class="flex flex-col gap-6"
+      method="POST"
+      action="/dashboard/resources/share-resources"
+    >
+      <h2 class="card-title justify-center">Share Resource</h2>
+      <UsersFilter eligibleUsers={eligibleUsers} />
+      <input type="hidden" name="resource_id" value={resourceId} />
+      <div class="flex flex-col gap-6">
+        <label>
+          <select
+            class="select select-bordered w-full rounded-none disabled:text-gray-300"
+            name="role"
+          >
+            <option value="" selected disabled>Select permission</option>
+            <option value="viewer">Viewer</option>
+            <option value="editor">Editor</option>
+            <option value="admin">Admin</option>
+          </select>
+        </label>
+      </div>
+      <div class="flex flex-col gap-6">
+        <div x-data="{ selectedDate: '', displayText: 'Expired At' }">
+          <button
+            type="button"
+            popovertarget={`cally-popover${resourceId}`}
+            class="input input-border w-full rounded-none"
+            id={`cally${resourceId}`}
+            style="anchor-name:--cally1"
+            x-text="displayText"
+          >
+            Expired At
+          </button>
+          <input type="hidden" name="expired_at" x-model="selectedDate" />
+          <div
+            popover
+            id={`cally-popover${resourceId}`}
+            class="dropdown bg-base-100 rounded-box shadow-lg"
+            style="position-anchor:--cally1"
+          >
+            <calendar-date
+              class="cally"
+              name="expired_at"
+              @change="selectedDate = $event.target.value; displayText = $event.target.value; $nextTick(() => document.getElementById('cally-popover1').hidePopover())"
+            >
+              <svg
+                aria-label="Previous"
+                class="fill-current size-4"
+                slot="previous"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                ><path d="M15.75 19.5 8.25 12l7.5-7.5"></path></svg
+              >
+              <svg
+                aria-label="Next"
+                class="fill-current size-4"
+                slot="next"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                ><path d="m8.25 4.5 7.5 7.5-7.5 7.5"></path></svg
+              >
+              <calendar-month></calendar-month>
+            </calendar-date>
+          </div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-6">
+        <label>
+          <select
+            class="select select-bordered w-full rounded-none"
+            name="rotation_period"
+          >
+            <option value="" selected disabled>Choose Rotation Period</option>
+            <option value="1_week">1 Week</option>
+            <option value="2_week">2 Week</option>
+            <option value="1_month">1 Month</option>
+            <option value="3_month">3 Month</option>
+            <option value="6_month">6 Month</option>
+            <option value="1_year">1 Year</option>
+          </select>
+        </label>
+      </div>
+      <button type="submit" class="btn btn-neutral w-full rounded-none">
+        Share
+      </button>
+    </Forms>
+  </div>
+</dialog>
+<script type="module" src="https://unpkg.com/cally"></script>

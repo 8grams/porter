@@ -12,6 +12,7 @@ import mysql from "../assets/icons/mysql.svg";
 import postgresSQL from "../assets/icons/postgresql.svg";
 import eye from "../assets/icons/eye.svg";
 import eyeclose from "../assets/icons/eye-close.svg";
+import usersvg from "../assets/icons/users.svg";
 
 export const ICONS = {
   terminal: Terminal,
@@ -22,6 +23,7 @@ export const ICONS = {
   edit: Edit,
   eye: eye,
   eyeclose: eyeclose,
+  users: usersvg,
 };
 
 export const ServicesIcons = {

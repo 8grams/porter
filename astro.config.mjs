@@ -21,4 +21,12 @@ export default defineConfig({
   server: {
     host: true,
   },
+  image: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
+    ],
+  },
 });
