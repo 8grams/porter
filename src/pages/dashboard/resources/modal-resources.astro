@@ -3,6 +3,7 @@ import Forms from "../../../components/Forms.astro";
 import { openDB } from "../../../utils/db";
 import getStringField from "../../../utils/fieldCast";
 
+const { user } = Astro.locals;
 const db = await openDB();
 
 if (Astro.request.method === "POST") {
@@ -16,83 +17,93 @@ if (Astro.request.method === "POST") {
   if (type === "aws_iam" || type === "google_iam") {
     if (isUpdate) {
       query =
-        "UPDATE resources SET type = ?, name = ?, keyID = ?, value = ? WHERE id = ?";
+        "UPDATE resources SET type = ?, name = ?, keyID = ?, value = ?, created_by = ? WHERE id = ?";
       values = [
         type,
         getStringField(formData, "name"),
         getStringField(formData, "keyID"),
         getStringField(formData, "value"),
+        user?.email as string,
         id,
       ];
     } else {
       query =
-        "INSERT INTO resources (type, name, keyID, value) VALUES (?, ?, ?, ?)";
+        "INSERT INTO resources (type, name, keyID, value, created_by) VALUES (?, ?, ?, ?, ?)";
       values = [
         type,
         getStringField(formData, "name"),
         getStringField(formData, "keyID"),
         getStringField(formData, "value"),
+        user?.email as string,
       ];
     }
   } else if (type === "postgresSQL_access" || type === "mySQL_access") {
     if (isUpdate) {
       query =
-        "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ? WHERE id = ?";
+        "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
       values = [
         type,
         getStringField(formData, "name"),
         getStringField(formData, "host"),
         getStringField(formData, "username"),
         getStringField(formData, "password"),
+        user?.email as string,
         id,
       ];
     } else {
       query =
-        "INSERT INTO resources (type, name, host, username, password) VALUES (?, ?, ?, ?, ?)";
+        "INSERT INTO resources (type, name, host, username, password, created_by) VALUES (?, ?, ?, ?, ?, ?)";
       values = [
         type,
         getStringField(formData, "name"),
         getStringField(formData, "host"),
         getStringField(formData, "username"),
         getStringField(formData, "password"),
+        user?.email as string,
       ];
     }
   } else if (type === "vm") {
     if (isUpdate) {
       query =
-        "UPDATE resources SET type = ?, name = ?, host = ?, value = ? WHERE id = ?";
+        "UPDATE resources SET type = ?, name = ?, host = ?, value = ?, created_by = ? WHERE id = ?";
       values = [
         type,
         getStringField(formData, "name"),
         getStringField(formData, "host"),
         getStringField(formData, "value"),
+        user?.email as string,
         id,
       ];
     } else {
       query =
-        "INSERT INTO resources (type, name, host, value) VALUES (?, ?, ?, ?)";
+        "INSERT INTO resources (type, name, host, value, created_by) VALUES (?, ?, ?, ?, ?)";
       values = [
         type,
         getStringField(formData, "name"),
         getStringField(formData, "host"),
         getStringField(formData, "value"),
+        user?.email as string,
       ];
     }
   } else {
     if (isUpdate) {
-      query = "UPDATE resources SET type = ?, name = ?, value = ? WHERE id = ?";
+      query =
+        "UPDATE resources SET type = ?, name = ?, value = ?, created_by = ? WHERE id = ?";
       values = [
         type,
         getStringField(formData, "name"),
         getStringField(formData, "value"),
+        user?.email as string,
         id,
       ];
     } else {
-      query = "INSERT INTO resources (type, name, value) VALUES (?, ?, ?)";
+      query =
+        "INSERT INTO resources (type, name, value, created_by) VALUES (?, ?, ?, ?)";
       values = [
         type,
         getStringField(formData, "name"),
         getStringField(formData, "value"),
+        user?.email as string,
       ];
     }
   }

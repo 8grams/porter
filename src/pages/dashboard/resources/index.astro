@@ -8,28 +8,36 @@ import DeleteResources from "./delete-resources.astro";
 import ShareResources from "./share-resources.astro";
 import SharedTo from "./shared-to.astro";
 
+const { user } = Astro.locals;
 const db = await openDB();
 
 const type = Astro.url.searchParams.get("type") || "";
 const search = Astro.url.searchParams.get("search") || "";
+const reload = Astro.url.searchParams.get("reload") || "";
 
 let resources = [];
 if (type === "all_types") {
   if (search) {
-    resources = await db.all(`SELECT * FROM resources WHERE name LIKE ?`, [
-      `%${search}%`,
-    ]);
+    resources = await db.all(
+      `SELECT * FROM resources WHERE name LIKE ? AND created_by = ?`,
+      [`%${search}%`, user?.email],
+    );
   } else {
-    resources = await db.all(`SELECT * FROM resources`);
+    resources = await db.all(`SELECT * FROM resources WHERE created_by = ?`, [
+      user?.email,
+    ]);
   }
 } else {
   if (search) {
     resources = await db.all(
-      `SELECT * FROM resources WHERE type = ? AND name LIKE ?`,
-      [type, `%${search}%`],
+      `SELECT * FROM resources WHERE type = ? AND name LIKE ? AND created_by = ?`,
+      [type, `%${search}%`, user?.email],
     );
   } else {
-    resources = await db.all(`SELECT * FROM resources WHERE type = ?`, [type]);
+    resources = await db.all(
+      `SELECT * FROM resources WHERE type = ? AND created_by = ?`,
+      [type, user?.email],
+    );
   }
 }
 ---

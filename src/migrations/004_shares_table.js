@@ -8,6 +8,7 @@ export async function up(db) {
       expired_at DATETIME,
       next_rotation DATETIME,
       role TEXT,
+      shared_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -15,5 +16,5 @@ export async function up(db) {
 }
 
 export async function down(db) {
-  await db.exec('DROP TABLE shares');
-} 
+  await db.exec("DROP TABLE shares");
+}

@@ -8,6 +8,8 @@ import { parseStringArray } from "../../../utils/helpers";
 
 const { resourceId } = Astro.props;
 
+const { user } = Astro.locals;
+
 const db = await openDB();
 
 if (Astro.request.method === "POST") {
@@ -23,8 +25,16 @@ if (Astro.request.method === "POST") {
   for (let i = 0; i < share_to_array.length; i++) {
     const userId = share_to_array[i];
     await db.run(
-      "INSERT INTO shares (resource_id, share_to, role, expired_at, next_rotation, rotation_period) VALUES (?, ?, ?, ?, ?, ?)",
-      [resourceId, userId, role, expired_at, next_rotation, rotationPeriod],
+      "INSERT INTO shares (resource_id, share_to, role, expired_at, next_rotation, rotation_period, shared_by) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [
+        resourceId,
+        userId,
+        role,
+        expired_at,
+        next_rotation,
+        rotationPeriod,
+        user?.email,
+      ],
     );
   }
 
@@ -84,7 +94,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
             <calendar-date
               class="cally"
               name="expired_at"
-              @change="selectedDate = $event.target.value; displayText = $event.target.value; $nextTick(() => document.getElementById('cally-popover1').hidePopover())"
+              @change="selectedDate = $event.target.value; displayText = $event.target.value; $nextTick(() => $el.closest('[x-data]').querySelector('[popover]').hidePopover())"
             >
               <svg
                 aria-label="Previous"

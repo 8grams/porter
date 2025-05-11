@@ -13,6 +13,7 @@ import postgresSQL from "../assets/icons/postgresql.svg";
 import eye from "../assets/icons/eye.svg";
 import eyeclose from "../assets/icons/eye-close.svg";
 import usersvg from "../assets/icons/users.svg";
+import download from "../assets/icons/download.svg";
 
 export const ICONS = {
   terminal: Terminal,
@@ -24,6 +25,7 @@ export const ICONS = {
   eye: eye,
   eyeclose: eyeclose,
   users: usersvg,
+  download: download,
 };
 
 export const ServicesIcons = {

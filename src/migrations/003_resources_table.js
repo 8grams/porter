@@ -9,6 +9,7 @@ export async function up(db) {
       host TEXT,
       value TEXT,
       keyID TEXT,
+      created_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
