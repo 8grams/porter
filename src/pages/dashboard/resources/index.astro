@@ -138,7 +138,48 @@ if (type === "all_types") {
             const IconComponent =
               ServicesIcons[resource.type as keyof typeof ServicesIcons];
             return (
-              <div class="card card-border bg-white rounded-none w-full">
+              <div class="card card-border bg-white rounded-none w-full relative">
+                <div class="absolute top-2 -right-1">
+                  <div class="dropdown dropdown-end">
+                    <button class="btn btn-ghost btn-xs">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="1"/>
+                        <circle cx="12" cy="5" r="1"/>
+                        <circle cx="12" cy="19" r="1"/>
+                      </svg>
+                    </button>
+                    <ul class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                      <li>
+                        <button
+                          data-id={resource.id}
+                          onclick="document.getElementById('modal_resources_' + this.dataset.id).showModal()"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                            <path d="m15 5 4 4"/>
+                          </svg>
+                          Edit
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          class="text-error"
+                          data-id={resource.id}
+                          onclick="document.getElementById('delete_resource_modal_' + this.dataset.id).showModal()"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"/>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            <line x1="10" x2="10" y1="11" y2="17"/>
+                            <line x1="14" x2="14" y1="11" y2="17"/>
+                          </svg>
+                          Delete
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
                 <div class="card-body flex flex-col justify-between gap-4">
                   <div class="flex flex-col gap-4">
                     <div class="flex justify-between">
@@ -194,24 +235,8 @@ if (type === "all_types") {
                       </div>
                     </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-4">
-                    <button
-                      class="btn btn-neutral rounded-none w-full btn-soft"
-                      data-id={resource.id}
-                      onclick="document.getElementById('modal_resources_' + this.dataset.id).showModal()"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      class="btn btn-error rounded-none w-full btn-soft"
-                      data-id={resource.id}
-                      onclick="document.getElementById('delete_resource_modal_' + this.dataset.id).showModal()"
-                    >
-                      Delete
-                    </button>
-                    <DeleteResources id={resource.id} />
-                    <ModalResources id={resource.id} />
-                  </div>
+                  <DeleteResources id={resource.id} />
+                  <ModalResources id={resource.id} />
                 </div>
               </div>
             );
