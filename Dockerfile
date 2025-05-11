@@ -1,7 +1,7 @@
 # base image
 FROM node:23.11.0-bookworm-slim AS base
 RUN npm install --global --no-update-notifier --no-fund pnpm
-RUN apt-get update && apt-get install -y libc6-compat curl apt-transport-https ca-certificates gnupg postgresql-client mysql-client
+RUN apt-get update && apt-get install -y curl apt-transport-https ca-certificates gnupg postgresql-client mariadb-client
 
 # install kubectl
 RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"

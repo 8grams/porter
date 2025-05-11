@@ -40,7 +40,7 @@ const getCurrentUser =
       method="POST"
     >
       <h2 class="card-title justify-center">
-        {id === "new" ? "Create" : "Update"} User
+        {id === "new" ? "New" : "Update"} User
       </h2>
       <input type="hidden" name="id" value={getCurrentUser?.id || ""} />
       <div class="flex flex-col gap-2">

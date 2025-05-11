@@ -21,7 +21,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users");
         class="btn btn-neutral rounded-none w-[140px]"
         onclick="modal_eligible_new.showModal()"
       >
-        Add Users
+        Create
       </button>
       <ModalEligibleUsers id={"new"} />
     </div>
@@ -59,13 +59,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users");
           <thead>
             <tr>
               <th>
-                <input
-                  type="checkbox"
-                  class="checkbox"
-                  :checked="isAllSelected()"
-                  @change="toggleAll"
-                  x-effect="$el.indeterminate = !isAllSelected() && selected.length"
-                />
+                No.
               </th>
               <th class="text-black">Email</th>
               <th></th>
@@ -74,17 +68,10 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users");
           <tbody>
             {
               eligibleUsers.length > 0 &&
-                eligibleUsers.map((user) => (
+                eligibleUsers.map((user: any, index: number) => (
                   <tr>
                     <td>
-                      <input
-                        type="checkbox"
-                        class="checkbox"
-                        name="eligible_id"
-                        value={user.id}
-                        x-bind:checked="selected.includes($el.value)"
-                        @change={`()=>toggle("${user.id}")`}
-                      />
+                      {index + 1}.
                     </td>
                     <td class="text-black">{user.email}</td>
                     <td class="relative">

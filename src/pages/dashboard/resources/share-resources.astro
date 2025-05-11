@@ -6,7 +6,7 @@ import getStringField from "../../../utils/field_cast";
 import calculateExpiryDate from "../../../utils/rotation_date";
 import { parseStringArray } from "../../../utils/helpers";
 
-const { resourceId } = Astro.props;
+const { id } = Astro.props;
 
 const { user } = Astro.locals;
 
@@ -44,7 +44,7 @@ if (Astro.request.method === "POST") {
 const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
 ---
 
-<dialog id={`share_resource_${resourceId}`} class="modal">
+<dialog slot="dialog" class="modal" id={`share_resource_${id}`}>
   <div class="modal-box">
     <form method="dialog">
       <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -58,7 +58,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
     >
       <h2 class="card-title justify-center">Share Resource</h2>
       <UsersFilter eligibleUsers={eligibleUsers} />
-      <input type="hidden" name="resource_id" value={resourceId} />
+      <input type="hidden" name="resource_id" value={id} />
       <div class="flex flex-col gap-6">
         <label>
           <select
@@ -76,9 +76,9 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
         <div x-data="{ selectedDate: '', displayText: 'Expired At' }">
           <button
             type="button"
-            popovertarget={`cally-popover${resourceId}`}
+            popovertarget={`cally-popover${id}`}
             class="input input-border w-full rounded-none"
-            id={`cally${resourceId}`}
+            id={`cally${id}`}
             style="anchor-name:--cally1"
             x-text="displayText"
           >
@@ -87,7 +87,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
           <input type="hidden" name="expired_at" x-model="selectedDate" />
           <div
             popover
-            id={`cally-popover${resourceId}`}
+            id={`cally-popover${id}`}
             class="dropdown bg-base-100 rounded-box shadow-lg"
             style="position-anchor:--cally1"
           >

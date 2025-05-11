@@ -163,6 +163,19 @@ if (type === "all_types") {
                       </li>
                       <li>
                         <button
+                          data-id={resource.id}
+                          onclick="document.getElementById('share_resource_' + this.dataset.id).showModal()"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                            <polyline points="16 6 12 2 8 6"/>
+                            <line x1="12" y1="2" x2="12" y2="15"/>
+                          </svg>
+                          Share
+                        </button>
+                      </li>
+                      <li>
+                        <button
                           class="text-error"
                           data-id={resource.id}
                           onclick="document.getElementById('delete_resource_modal_' + this.dataset.id).showModal()"
@@ -212,17 +225,6 @@ if (type === "all_types") {
                         </div>
                       )}
                       <div class="flex items-center justify-between gap-4">
-                        <p class="text-gray-700">Share resource</p>
-                        <button
-                          class="cursor-pointer flex items-center justify-end"
-                          data-id={resource.id}
-                          onclick="document.getElementById('share_resource_' + this.dataset.id).showModal()"
-                        >
-                          <ICONS.share class="fill-black w-5 h-5" />
-                        </button>
-                        <ShareResources resourceId={resource.id} />
-                      </div>
-                      <div class="flex items-center justify-between gap-4">
                         <p class="text-gray-700">Shared to</p>
                         <button
                           class="cursor-pointer flex items-center justify-end"
@@ -237,6 +239,7 @@ if (type === "all_types") {
                   </div>
                   <DeleteResources id={resource.id} />
                   <ModalResources id={resource.id} />
+                  <ShareResources id={resource.id} />
                 </div>
               </div>
             );
