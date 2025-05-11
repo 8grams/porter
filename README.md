@@ -1,5 +1,5 @@
 <p align="center">
-    <img alt="Ravage" src="https://raw.githubusercontent.com/8grams/porter/refs/heads/develop/public/logo.png" height="200">
+    <img alt="Porter" src="https://raw.githubusercontent.com/8grams/porter/refs/heads/main/public/logo.png" height="200">
 </p>
 
 
