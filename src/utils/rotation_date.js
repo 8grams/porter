@@ -1,11 +1,11 @@
-function formatDate(date: Date) {
+function formatDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-function calculateExpiryDate(rotationPeriod: string, expired_at: string) {
+function calculateExpiryDate(rotationPeriod, expired_at) {
   let expiryDate = new Date(expired_at);
   const expiredDate = new Date(expiryDate);
 
@@ -35,4 +35,4 @@ function calculateExpiryDate(rotationPeriod: string, expired_at: string) {
   return formatDate(expiryDate);
 }
 
-export default calculateExpiryDate;
+export default calculateExpiryDate; 

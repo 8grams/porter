@@ -1,4 +1,4 @@
-function getStringField(formData: FormData, field: string): string {
+function getStringField(formData, field) {
   const value = formData.get(field);
   if (typeof value !== "string") {
     throw new Error(
@@ -8,4 +8,4 @@ function getStringField(formData: FormData, field: string): string {
   return value;
 }
 
-export default getStringField;
+export default getStringField; 

@@ -2,8 +2,8 @@
 import Forms from "../../../components/Forms.astro";
 import UsersFilter from "../../../components/UsersFilter.astro";
 import { openDB } from "../../../utils/db";
-import getStringField from "../../../utils/fieldCast";
-import calculateExpiryDate from "../../../utils/rotationDate";
+import getStringField from "../../../utils/field_cast";
+import calculateExpiryDate from "../../../utils/rotation_date";
 import { parseStringArray } from "../../../utils/helpers";
 
 const { resourceId } = Astro.props;

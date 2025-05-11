@@ -20,4 +20,4 @@ function parseStringArray(stringArray) {
   }
 }
 
-export { parseStringArray };
+export { parseStringArray }; 

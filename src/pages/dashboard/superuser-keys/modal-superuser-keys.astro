@@ -1,6 +1,6 @@
 ---
 import Forms from "../../../components/Forms.astro";
-import getStringField from "../../../utils/fieldCast";
+import getStringField from "../../../utils/field_cast";
 import { openDB } from "../../../utils/db";
 
 const { dialogId } = Astro.props;
@@ -153,7 +153,7 @@ const getCurrentSuperuserKeys =
                   class="textarea w-full rounded-none"
                   name="keyID"
                   required
-                  placeholder="Input Key Id"
+                  placeholder="Access Key Id"
                   value={getCurrentSuperuserKeys?.value}
                   >{getCurrentSuperuserKeys?.value}</textarea
                 >
@@ -163,7 +163,7 @@ const getCurrentSuperuserKeys =
                   class="textarea w-full rounded-none"
                   name="value"
                   required
-                  placeholder="Input Secret Key"
+                  placeholder="Secret Access Key"
                   value={getCurrentSuperuserKeys?.value}
                   >{getCurrentSuperuserKeys?.value}</textarea
                 >
@@ -176,7 +176,7 @@ const getCurrentSuperuserKeys =
                 class="textarea w-full rounded-none"
                 name="value"
                 required
-                placeholder="Input Service Account Key"
+                placeholder="Service Account Key"
                 value={getCurrentSuperuserKeys?.value}
                 >{getCurrentSuperuserKeys?.value}</textarea
               >
@@ -188,7 +188,7 @@ const getCurrentSuperuserKeys =
                 class="textarea w-full rounded-none"
                 name="value"
                 required
-                placeholder="Input SSH Private Key"
+                placeholder="SSH Private Key"
                 value={getCurrentSuperuserKeys?.value}
                 >{getCurrentSuperuserKeys?.value}</textarea
               >
@@ -200,7 +200,7 @@ const getCurrentSuperuserKeys =
                 class="textarea w-full rounded-none"
                 name="value"
                 required
-                placeholder="Input Kubeconfig"
+                placeholder="Kubeconfig"
                 value={getCurrentSuperuserKeys?.value}
                 >{getCurrentSuperuserKeys?.value}</textarea
               >

@@ -1,7 +1,7 @@
 ---
 import Forms from "../../../components/Forms.astro";
 import { openDB } from "../../../utils/db";
-import getStringField from "../../../utils/fieldCast";
+import getStringField from "../../../utils/field_cast";
 
 const { user } = Astro.locals;
 const db = await openDB();
@@ -178,7 +178,7 @@ const getCurrentResources =
                   class="textarea w-full rounded-none"
                   name="keyID"
                   required
-                  placeholder="Input Key Id"
+                  placeholder="Access Key ID"
                   value={getCurrentResources?.value}
                   >{getCurrentResources?.value}</textarea
                 >
@@ -188,7 +188,7 @@ const getCurrentResources =
                   class="textarea w-full rounded-none"
                   name="value"
                   required
-                  placeholder="Input Secret Key"
+                  placeholder="Secret Access Key"
                   value={getCurrentResources?.value}
                   >{getCurrentResources?.value}</textarea
                 >
@@ -249,7 +249,7 @@ const getCurrentResources =
                 class="textarea w-full rounded-none"
                 name="value"
                 required
-                placeholder="Input Kubeconfig"
+                placeholder="Kubeconfig"
                 value={getCurrentResources?.value}
                 >{getCurrentResources?.value}</textarea
               >
@@ -308,7 +308,7 @@ const getCurrentResources =
       console.error("Failed to parse superuser keys:", e);
     }
     return {
-      typeDialog: dialogId === "create" ? "Create" : "Update",
+      typeDialog: dialogId === "create" ? "New Resource" : "Update Resource",
       category_name: dialogId === "create" ? "" : parsedKeys?.type,
       titles: {
         aws_iam: "AWS IAM",

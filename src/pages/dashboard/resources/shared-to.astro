@@ -2,7 +2,7 @@
 import { openDB } from "../../../utils/db";
 import { ICONS } from "../../../constants";
 import Forms from "../../../components/Forms.astro";
-import getStringField from "../../../utils/fieldCast";
+import getStringField from "../../../utils/field_cast";
 
 const { resourceId } = Astro.props;
 
@@ -85,7 +85,7 @@ JOIN
         </thead>
         <tbody>
           {
-            sharedTo.map((item) => (
+            sharedTo.map((item: { id: string; email: string; role: string; expired_at: string; next_rotation: string }) => (
               <tr>
                 <td>
                   <input
