@@ -94,7 +94,7 @@ const { eligibleUsers } = Astro.props;
     <div class="max-h-60 overflow-y-auto py-2">
       <template x-for="(option, index) in filteredOptions" :key="option.id">
         <li
-          :class="{
+          class="{
             'bg-gray-100': index === highlightedIndex,
             'bg-blue-50': isItemSelected(option),
             'cursor-pointer hover:bg-gray-50 dropdown-item': true
