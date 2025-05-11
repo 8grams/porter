@@ -1,10 +1,25 @@
 # base image
-FROM node:23.11.0-alpine AS base
+FROM node:23.11.0-bookworm-slim AS base
 RUN npm install --global --no-update-notifier --no-fund pnpm
+RUN apt-get update && apt-get install -y libc6-compat curl apt-transport-https ca-certificates gnupg postgresql-client mysql-client
+
+# install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+RUN chmod +x ./kubectl
+RUN mv ./kubectl /usr/local/bin/kubectl
+
+# install gcloud
+RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+RUN apt-get update && apt-get install -y google-cloud-sdk
+
+# install awscli
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+RUN unzip awscliv2.zip
+RUN ./aws/install --bin-dir /usr/local/bin --no-install-recommends --no-update-notifier --no-fund
 
 # Deps installer
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml* ./

@@ -9,7 +9,7 @@ import AWSIam from "../assets/icons/aws_iam.svg";
 import vmware from "../assets/icons/vmware.svg";
 import kubernetes from "../assets/icons/kubernetes.svg";
 import mysql from "../assets/icons/mysql.svg";
-import postgresSQL from "../assets/icons/postgresql.svg";
+import postgresql from "../assets/icons/postgresql.svg";
 import eye from "../assets/icons/eye.svg";
 import eyeclose from "../assets/icons/eye-close.svg";
 import usersvg from "../assets/icons/users.svg";
@@ -33,6 +33,6 @@ export const ServicesIcons = {
   aws_iam: AWSIam,
   vm: vmware,
   kubernetes: kubernetes,
-  mySQL_access: mysql,
-  postgresSQL_access: postgresSQL,
+  mysql_access: mysql,
+  postgresql_access: postgresql,
 };

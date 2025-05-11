@@ -2,6 +2,7 @@
 import Forms from "../../../components/Forms.astro";
 import { openDB } from "../../../utils/db";
 import getStringField from "../../../utils/field_cast";
+import { encrypt, decrypt } from "../../../utils/crypto";
 
 const { user } = Astro.locals;
 const db = await openDB();
@@ -21,8 +22,8 @@ if (Astro.request.method === "POST") {
       values = [
         type,
         getStringField(formData, "name"),
-        getStringField(formData, "keyID"),
-        getStringField(formData, "value"),
+        encrypt(getStringField(formData, "keyID")),
+        encrypt(getStringField(formData, "value")),
         user?.email as string,
         id,
       ];
@@ -32,12 +33,12 @@ if (Astro.request.method === "POST") {
       values = [
         type,
         getStringField(formData, "name"),
-        getStringField(formData, "keyID"),
-        getStringField(formData, "value"),
+        encrypt(getStringField(formData, "keyID")),
+        encrypt(getStringField(formData, "value")),
         user?.email as string,
       ];
     }
-  } else if (type === "postgresSQL_access" || type === "mySQL_access") {
+  } else if (type === "postgresql_access" || type === "mysql_access") {
     if (isUpdate) {
       query =
         "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
@@ -45,8 +46,8 @@ if (Astro.request.method === "POST") {
         type,
         getStringField(formData, "name"),
         getStringField(formData, "host"),
-        getStringField(formData, "username"),
-        getStringField(formData, "password"),
+        encrypt(getStringField(formData, "username")),
+        encrypt(getStringField(formData, "password")),
         user?.email as string,
         id,
       ];
@@ -57,8 +58,8 @@ if (Astro.request.method === "POST") {
         type,
         getStringField(formData, "name"),
         getStringField(formData, "host"),
-        getStringField(formData, "username"),
-        getStringField(formData, "password"),
+        encrypt(getStringField(formData, "username")),
+        encrypt(getStringField(formData, "password")),
         user?.email as string,
       ];
     }
@@ -70,7 +71,7 @@ if (Astro.request.method === "POST") {
         type,
         getStringField(formData, "name"),
         getStringField(formData, "host"),
-        getStringField(formData, "value"),
+        encrypt(getStringField(formData, "value")),
         user?.email as string,
         id,
       ];
@@ -81,7 +82,7 @@ if (Astro.request.method === "POST") {
         type,
         getStringField(formData, "name"),
         getStringField(formData, "host"),
-        getStringField(formData, "value"),
+        encrypt(getStringField(formData, "value")),
         user?.email as string,
       ];
     }
@@ -92,7 +93,7 @@ if (Astro.request.method === "POST") {
       values = [
         type,
         getStringField(formData, "name"),
-        getStringField(formData, "value"),
+        encrypt(getStringField(formData, "value")),
         user?.email as string,
         id,
       ];
@@ -102,7 +103,7 @@ if (Astro.request.method === "POST") {
       values = [
         type,
         getStringField(formData, "name"),
-        getStringField(formData, "value"),
+        encrypt(getStringField(formData, "value")),
         user?.email as string,
       ];
     }
@@ -154,8 +155,8 @@ const getCurrentResources =
             <option value="google_iam"> Google IAM </option>
             <option value="vm">VM</option>
             <option value="kubernetes">Kubernetes</option>
-            <option value="postgresSQL_access">PostgresSQL Access</option>
-            <option value="mySQL_access">MySQL Access</option>
+            <option value="postgresql_access">PostgreSQL Access</option>
+            <option value="mysql_access">MySQL Access</option>
           </select>
         </label>
         <div class="flex flex-col gap-6">
@@ -179,8 +180,8 @@ const getCurrentResources =
                   name="keyID"
                   required
                   placeholder="Access Key ID"
-                  value={getCurrentResources?.value}
-                  >{getCurrentResources?.value}</textarea
+                  value={decrypt(getCurrentResources?.keyID)}
+                  >{decrypt(getCurrentResources?.keyID)}</textarea
                 >
               </label>
               <label>
@@ -189,8 +190,8 @@ const getCurrentResources =
                   name="value"
                   required
                   placeholder="Secret Access Key"
-                  value={getCurrentResources?.value}
-                  >{getCurrentResources?.value}</textarea
+                  value={decrypt(getCurrentResources?.value)}
+                  >{decrypt(getCurrentResources?.value)}</textarea
                 >
               </label>
             </div>
@@ -204,7 +205,7 @@ const getCurrentResources =
                   name="keyID"
                   class="input w-full rounded-none"
                   required
-                  value={getCurrentResources?.keyID || ""}
+                  value={decrypt(getCurrentResources?.keyID) || ""}
                 />
               </label>
               <label>
@@ -213,51 +214,13 @@ const getCurrentResources =
                   name="value"
                   required
                   placeholder="Service Account Key"
-                  value={getCurrentResources?.value}
-                  >{getCurrentResources?.value}</textarea
+                  value={decrypt(getCurrentResources?.value)}
+                  >{decrypt(getCurrentResources?.value)}</textarea
                 >
               </label>
             </div>
           </template>
           <template x-if="category_name === 'vm'">
-            <div class="flex flex-col gap-6">
-              <label>
-                <input
-                  type="text"
-                  placeholder="IP Address"
-                  name="host"
-                  required
-                  value={getCurrentResources?.host || ""}
-                  class="input w-full rounded-none"
-                />
-              </label>
-              <label>
-                <textarea
-                  class="textarea w-full rounded-none"
-                  name="value"
-                  required
-                  placeholder="SSH Key"
-                  value={getCurrentResources?.value}
-                  >{getCurrentResources?.value}</textarea
-                >
-              </label>
-            </div>
-          </template>
-          <template x-if="category_name === 'kubernetes'">
-            <label>
-              <textarea
-                class="textarea w-full rounded-none"
-                name="value"
-                required
-                placeholder="Kubeconfig"
-                value={getCurrentResources?.value}
-                >{getCurrentResources?.value}</textarea
-              >
-            </label>
-          </template>
-          <template
-            x-if="category_name === 'postgresSQL_access' || category_name === 'mySQL_access'"
-          >
             <div class="flex flex-col gap-6">
               <label>
                 <input
@@ -270,12 +233,53 @@ const getCurrentResources =
                 />
               </label>
               <label>
+                <textarea
+                  class="textarea w-full rounded-none"
+                  name="value"
+                  required
+                  placeholder="SSH Key"
+                  value={decrypt(getCurrentResources?.value)}
+                  >{decrypt(getCurrentResources?.value)}</textarea
+                >
+              </label>
+            </div>
+          </template>
+          <template x-if="category_name === 'kubernetes'">
+            <label>
+              <textarea
+                class="textarea w-full rounded-none"
+                name="value"
+                required
+                placeholder="Kubeconfig"
+                value={decrypt(getCurrentResources?.value)}
+                >{decrypt(getCurrentResources?.value)}</textarea
+              >
+            </label>
+          </template>
+          <template
+            x-if="
+              category_name === 'postgresql_access' ||
+              category_name === 'mysql_access'
+            "
+          >
+            <div class="flex flex-col gap-6">
+              <label>
+                <input
+                  type="text"
+                  placeholder="Host"
+                  name="host"
+                  required
+                  value={(getCurrentResources?.host) || ""}
+                  class="input w-full rounded-none"
+                />
+              </label>
+              <label>
                 <input
                   type="text"
                   placeholder="Username"
                   name="username"
                   required
-                  value={getCurrentResources?.username || ""}
+                  value={decrypt(getCurrentResources?.username) || ""}
                   class="input w-full rounded-none"
                 />
               </label>
@@ -285,7 +289,7 @@ const getCurrentResources =
                   placeholder="Password"
                   name="password"
                   required
-                  value={getCurrentResources?.password || ""}
+                  value={decrypt(getCurrentResources?.password) || ""}
                   class="input w-full rounded-none"
                 />
               </label>
@@ -315,8 +319,8 @@ const getCurrentResources =
         google_iam: "Google IAM",
         vm: "VM",
         kubernetes: "Kubernetes",
-        postgresSQL_access: "PostgresSQL",
-        mySQL_access: "MySQL",
+        postgresql_access: "PostgreSQL",
+        mysql_access: "MySQL",
       },
     };
   }

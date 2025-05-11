@@ -135,10 +135,10 @@ if (type === "all_types") {
             <option value="all_types">All Types</option>
             <option value="aws_iam">AWS Key</option>
             <option value="google_iam"> Google IAM </option>
-            <option value="vm">VM</option>
+            <option value="vm">Virtual Machine</option>
             <option value="kubeconfig">Kubeconfig</option>
-            <option value="postgresSQL_access">PostgresSQL Access</option>
-            <option value="mySQL_access">MySQL Access</option>
+            <option value="postgresql_access">PostgreSQL Access</option>
+            <option value="mysql_access">MySQL Access</option>
           </select>
         </label>
       </div>
@@ -146,7 +146,7 @@ if (type === "all_types") {
     <div class="grid grid-cols-4 gap-6">
       {
         shared.length > 0 &&
-          shared.map((share) => {
+          shared.map((share: any) => {
             const IconComponent =
               ServicesIcons[share.type as keyof typeof ServicesIcons];
             return (
@@ -172,8 +172,8 @@ if (type === "all_types") {
                   {[
                     "vm",
                     "kubernetes",
-                    "mySQL_access",
-                    "postgresSQL_access",
+                    "mysql_access",
+                    "postgresql_access",
                   ].includes(share.type) && (
                     <div class="flex flex-col gap-5">
                       <div class="flex items-center justify-between gap-4">
@@ -222,7 +222,7 @@ if (type === "all_types") {
                       </p>
                     </div>
                   )}
-                  {["mySQL_access", "postgresSQL_access"].includes(
+                  {["mysql_access", "postgresql_access"].includes(
                     share.type,
                   ) && (
                     <div class="flex flex-col gap-3">
