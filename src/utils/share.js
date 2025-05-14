@@ -1,9 +1,10 @@
 import { exec, execSync } from 'child_process';
-import { chmodSync, writeFileSync } from 'fs';
+import { chmodSync, writeFileSync, unlinkSync, existsSync, readFileSync, mkdtempSync, rmdirSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { promisify } from 'util';
 import { decrypt } from './crypto';
+import { NodeSSH } from 'node-ssh';
 
 const execAsync = promisify(exec);
 
@@ -74,6 +75,25 @@ export async function createAdminPgUser(resource) {
   }
 }
 
+export async function deletePostgresqlUser(resource, username) {
+  // SQL command to drop the user
+  const psql = `
+    PGPASSWORD=${decrypt(resource.password)} psql -h ${resource.host} -U ${resource.username} -d postgres \
+    -c "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM ${username}; \
+    REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM ${username}; \
+    REVOKE ALL PRIVILEGES ON DATABASE postgres FROM ${username}; \
+    DROP USER IF EXISTS ${username};"
+  `;
+
+  try {
+    await execAsync(psql);
+    return { success: true, message: `Successfully deleted PostgreSQL user: ${username}` };
+  } catch (error) {
+    throw new Error(`Failed to delete PostgreSQL user: ${error.message}`);
+  }
+}
+
+
 export async function createViewerMysqlUser(resource) {
   const username = createRandomUsername(`mysql_viewer_${resource.id}`);
   const password = createRandomPassword();
@@ -131,6 +151,20 @@ export async function createSuperuserMysqlUser(resource) {
   }
 }
 
+export async function deleteMysqlUser(resource, username) {
+  const mysql = `
+    mysql -h ${resource.host} -u ${resource.username} -p${resource.password} \
+    -e "DROP USER IF EXISTS '${username}'@'%';"
+  `;
+
+  try {
+    await execAsync(mysql);
+    return { success: true, message: `Successfully deleted MySQL user: ${username}` };
+  } catch (error) {
+    throw new Error(`Failed to delete MySQL user: ${error.message}`);
+  }
+}
+
 export async function createViewerGcpUser(resource, user) {
   const projectId = resource.host;
 
@@ -148,6 +182,9 @@ export async function createViewerGcpUser(resource, user) {
     for (const cmd of commands) {
       await execAsync(cmd);
     }
+
+    unlinkSync(tempKeyPath);
+
     return { 
       username: "",
       password: ""
@@ -176,6 +213,8 @@ export async function createEditorGcpUser(resource, user) {
     for (const cmd of commands) {
       await execAsync(cmd);
     }
+
+    unlinkSync(tempKeyPath);
     return { 
       username: "",
       password: ""
@@ -204,12 +243,37 @@ export async function createAdminGcpUser(resource, user) {
     for (const cmd of commands) {
       await execAsync(cmd);
     }
+
+    unlinkSync(tempKeyPath);
     return { 
       username: "",
       password: ""
     };
   } catch (error) {
     throw new Error(`Failed to create GCP admin user: ${error.message}`);
+  }
+}
+
+export async function deleteGcpUser(resource, username) {
+  const projectId = resource.host;
+
+  // dump key to file
+  const tempKeyPath = dumpKeyToFile(resource.value);
+
+  const commands = [
+    `export GOOGLE_APPLICATION_CREDENTIALS="${tempKeyPath}" && gcloud iam users delete ${username} --project=${projectId}`,
+  ];
+
+  try {
+    for (const cmd of commands) {
+      await execAsync(cmd);
+    }
+
+    unlinkSync(tempKeyPath);
+
+    return { success: true, message: `Successfully deleted GCP user: ${username}` };
+  } catch (error) {
+    throw new Error(`Failed to delete GCP user: ${error.message}`);
   }
 }
 
@@ -306,6 +370,296 @@ export async function createAdminAwsUser(resource) {
   }
 }
 
+export async function deleteAwsUser(resource, username) {
+  const commands = [
+    `aws iam delete-user --user-name ${username}`,
+  ];
+
+  try {
+    for (const cmd of commands) {
+      await execAsync(cmd);
+    }
+    return { success: true, message: `Successfully deleted AWS user: ${username}` };
+  } catch (error) {
+    throw new Error(`Failed to delete AWS user: ${error.message}`);
+  }
+}
+
+export async function createViewerK8sUser(resource) {
+  const username = createRandomUsername(`k8s_viewer_${resource.id}`);
+  const namespace = resource.namespace || 'default';
+  
+  // Create temp directory for kubeconfig
+  const kubeconfigPath = dumpKeyToFile(resource.value);
+  
+  const commands = [
+    // Create namespace-specific role for read-only access
+    `KUBECONFIG=${kubeconfigPath} kubectl create role readonly-role --verb=get,list,watch --resource=pods,services,deployments,configmaps,secrets,ingresses,statefulsets,daemonsets,replicasets,jobs,cronjobs -n ${namespace}`,
+    
+    // Create service account
+    `KUBECONFIG=${kubeconfigPath} kubectl create serviceaccount ${username} -n ${namespace}`,
+    
+    // Create role binding
+    `KUBECONFIG=${kubeconfigPath} kubectl create rolebinding ${username}-binding --role=readonly-role --serviceaccount=${namespace}:${username} -n ${namespace}`,
+    
+    // Create token (for Kubernetes >= 1.24)
+    `KUBECONFIG=${kubeconfigPath} kubectl create token ${username} -n ${namespace}`
+  ];
+
+  try {
+    const results = [];
+    for (let i = 0; i < commands.length; i++) {
+      const { stdout } = await execAsync(commands[i]);
+      results.push(stdout);
+    }
+    
+    // The last result should be the token
+    const token = results[results.length - 1].trim();
+    
+    // Create a user-specific kubeconfig
+    const userKubeconfig = generateKubeconfig(resource.host, namespace, username, token);
+
+    unlinkSync(kubeconfigPath);
+
+    return { 
+      username: "",
+      password: userKubeconfig,
+    };
+  } catch (error) {
+    throw new Error(`Failed to create Kubernetes viewer user: ${error.message}`);
+  }
+}
+
+export async function createEditorK8sUser(resource) {
+  const username = createRandomUsername(`k8s_editor_${resource.id}`);
+  const namespace = resource.namespace || 'default';
+  
+  // Create temp directory for kubeconfig
+  const kubeconfigPath = dumpKeyToFile(resource.value);
+  
+  const commands = [
+    // Create namespace-specific role for editor access
+    `KUBECONFIG=${kubeconfigPath} kubectl create role editor-role --verb=get,list,watch,create,update,patch,delete --resource=pods,services,deployments,configmaps,secrets,ingresses,statefulsets,daemonsets,replicasets,jobs,cronjobs -n ${namespace}`,
+    
+    // Create service account
+    `KUBECONFIG=${kubeconfigPath} kubectl create serviceaccount ${username} -n ${namespace}`,
+    
+    // Create role binding
+    `KUBECONFIG=${kubeconfigPath} kubectl create rolebinding ${username}-binding --role=editor-role --serviceaccount=${namespace}:${username} -n ${namespace}`,
+    
+    // Create token (for Kubernetes >= 1.24)
+    `KUBECONFIG=${kubeconfigPath} kubectl create token ${username} -n ${namespace}`
+  ];
+
+  try {
+    const results = [];
+    for (let i = 0; i < commands.length; i++) {
+      const { stdout } = await execAsync(commands[i]);
+      results.push(stdout);
+    }
+    
+    // The last result should be the token
+    const token = results[results.length - 1].trim();
+    
+    // Create a user-specific kubeconfig
+    const userKubeconfig = generateKubeconfig(resource.host, namespace, username, token);
+
+    unlinkSync(kubeconfigPath);
+    
+    return { 
+      username: "",
+      password: userKubeconfig,
+    };
+  } catch (error) {
+    throw new Error(`Failed to create Kubernetes editor user: ${error.message}`);
+  }
+}
+
+export async function createAdminK8sUser(resource) {
+  const username = createRandomUsername(`k8s_admin_${resource.id}`);
+  const namespace = resource.namespace || 'default';
+  
+  // Create temp directory for kubeconfig
+  const kubeconfigPath = dumpKeyToFile(resource.value);
+  
+  const commands = [
+    // Create service account
+    `KUBECONFIG=${kubeconfigPath} kubectl create serviceaccount ${username} -n ${namespace}`,
+    
+    // Create cluster role binding for admin access
+    `KUBECONFIG=${kubeconfigPath} kubectl create clusterrolebinding ${username}-cluster-admin-binding --clusterrole=cluster-admin --serviceaccount=${namespace}:${username}`,
+    
+    // Create token (for Kubernetes >= 1.24)
+    `KUBECONFIG=${kubeconfigPath} kubectl create token ${username} -n ${namespace}`
+  ];
+
+  try {
+    const results = [];
+    for (let i = 0; i < commands.length; i++) {
+      const { stdout } = await execAsync(commands[i]);
+      results.push(stdout);
+    }
+    
+    // The last result should be the token
+    const token = results[results.length - 1].trim();
+    
+    // Create a user-specific kubeconfig
+    const userKubeconfig = generateKubeconfig(resource.host, namespace, username, token);
+
+    unlinkSync(kubeconfigPath);
+
+    return { 
+      username: "",
+      password: userKubeconfig,
+    };
+  } catch (error) {
+    throw new Error(`Failed to create Kubernetes admin user: ${error.message}`);
+  }
+}
+
+export async function deleteK8sUser(resource, username) {
+  const namespace = resource.namespace || 'default';
+  
+  const commands = [
+    `KUBECONFIG=${kubeconfigPath} kubectl delete serviceaccount ${username} -n ${namespace}`,
+    `KUBECONFIG=${kubeconfigPath} kubectl delete rolebinding ${username}-binding --serviceaccount=${namespace}:${username} -n ${namespace}`,
+    `KUBECONFIG=${kubeconfigPath} kubectl delete role ${username}-role --serviceaccount=${namespace}:${username} -n ${namespace}`,
+  ];
+
+  try {
+    for (const cmd of commands) {
+      await execAsync(cmd);
+    }
+    unlinkSync(kubeconfigPath);
+    return { success: true, message: `Successfully deleted Kubernetes user: ${username}` };
+  } catch (error) {
+    throw new Error(`Failed to delete Kubernetes user: ${error.message}`);
+  }
+}
+
+export async function createSshUser(resource, permission) {
+  const ssh = new NodeSSH();
+  const username = createRandomUsername(`ssh_${resource.id}`);
+  const tempDir = mkdtempSync(join(tmpdir(), 'ssh-keys-'));
+  const privateKeyPath = join(tempDir, 'id_rsa');
+  const publicKeyPath = join(tempDir, 'id_rsa.pub');
+  
+  try {
+    // Generate SSH key pair
+    await execAsync(`ssh-keygen -t rsa -b 4096 -f ${privateKeyPath} -N "" -C "${username}@${resource.host}"`);
+    
+    // Read the public key
+    const publicKey = readFileSync(publicKeyPath, 'utf8').trim();
+    
+    // Read the private key
+    const privateKey = readFileSync(privateKeyPath, 'utf8');
+    
+    // Connect to the VM using the resource's SSH key
+    await ssh.connect({
+      host: resource.host,
+      username: username,
+      privateKey: decrypt(resource.password)
+    });
+    
+    // Create user with appropriate permissions
+    if (permission === 'viewer') {
+      // Create a regular user with limited permissions
+      await ssh.execCommand(`useradd -m -s /bin/bash ${username}`);
+    } else if (permission === 'editor') {
+      // Create a user with sudo access for specific commands
+      await ssh.execCommand(`useradd -m -s /bin/bash ${username}`);
+      await ssh.execCommand(`echo "${username} ALL=(ALL) /bin/ls, /usr/bin/apt, /usr/bin/apt-get" | tee /etc/sudoers.d/${username}`);
+    } else if (permission === 'admin') {
+      // Create a user with full sudo access
+      await ssh.execCommand(`useradd -m -s /bin/bash ${username}`);
+      await ssh.execCommand(`usermod -aG sudo ${username}`);
+    }
+    
+    // Create .ssh directory and set permissions
+    await ssh.execCommand(`mkdir -p /home/${username}/.ssh`);
+    await ssh.execCommand(`echo "${publicKey}" > /home/${username}/.ssh/authorized_keys`);
+    await ssh.execCommand(`chown -R ${username}:${username} /home/${username}/.ssh`);
+    await ssh.execCommand(`chmod 700 /home/${username}/.ssh`);
+    await ssh.execCommand(`chmod 600 /home/${username}/.ssh/authorized_keys`);
+    
+    // Clean up temporary files
+    unlinkSync(privateKeyPath);
+    unlinkSync(publicKeyPath);
+    rmdirSync(tempDir);
+    
+    // Disconnect SSH
+    ssh.dispose();
+    
+    return {
+      username: username,
+      password: privateKey
+    };
+  } catch (error) {
+    // Clean up on error
+    try {
+      if (existsSync(privateKeyPath)) unlinkSync(privateKeyPath);
+      if (existsSync(publicKeyPath)) unlinkSync(publicKeyPath);
+      if (existsSync(tempDir)) rmdirSync(tempDir);
+      ssh.dispose();
+    } catch (cleanupError) {
+      console.error('Error during cleanup:', cleanupError);
+    }
+    
+    throw new Error(`Failed to create SSH user: ${error.message}`);
+  }
+}
+
+export async function deleteSshUser(resource, username) {
+  const ssh = new NodeSSH();
+  
+  try {
+    // Connect to the VM using the resource's SSH key
+    await ssh.connect({
+      host: resource.host,
+      username: username,
+      privateKey: decrypt(resource.password)
+    });
+    
+    // Delete the user and their home directory
+    await ssh.execCommand(`userdel -r ${username}`);
+    
+    // Remove any sudoers file if it exists
+    await ssh.execCommand(`rm -f /etc/sudoers.d/${username}`);
+    
+    // Disconnect SSH
+    ssh.dispose();
+    
+    return { success: true, message: `Successfully deleted SSH user: ${username}` };
+  } catch (error) {
+    if (ssh) ssh.dispose();
+    throw new Error(`Failed to delete SSH user: ${error.message}`);
+  }
+}
+
+
+function generateKubeconfig(server, namespace, username, token) {
+  return `apiVersion: v1
+kind: Config
+preferences: {}
+clusters:
+- cluster:
+    server: ${server}
+    insecure-skip-tls-verify: true
+  name: ${namespace}-cluster
+contexts:
+- context:
+    cluster: ${namespace}-cluster
+    namespace: ${namespace}
+    user: ${username}
+  name: ${namespace}-context
+current-context: ${namespace}-context
+users:
+- name: ${username}
+  user:
+    token: ${token}
+`;
+}
+
 export function createUser(resource, permission) {
   switch (resource.type) {
     case "postgresql_access":
@@ -355,6 +709,14 @@ export function createUser(resource, permission) {
         return createEditorAwsUser(resource);
       } else if (permission == "superuser") {
         return createAdminAwsUser(resource);
+      }
+    case "kubernetes":
+      if (permission == "viewer") {
+        return createViewerK8sUser(resource);
+      } else if (permission == "editor") {
+        return createEditorK8sUser(resource);
+      } else if (permission == "admin") {
+        return createAdminK8sUser(resource);
       }
     default:
       throw new Error(`Unsupported resource type: ${resource.type}`);

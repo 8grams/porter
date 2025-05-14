@@ -8,9 +8,7 @@ import { parseStringArray } from "../../../utils/helpers";
 import { createUser } from "../../../utils/share";
 
 const { id } = Astro.props;
-
 const { user } = Astro.locals;
-
 const db = await openDB();
 
 if (Astro.request.method === "POST") {
