@@ -4,11 +4,9 @@ export async function up(db) {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type TEXT NOT NULL,
       name TEXT NOT NULL UNIQUE,
+      host TEXT,
       username TEXT,
       password TEXT,
-      host TEXT,
-      value TEXT,
-      keyID TEXT,
       created_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

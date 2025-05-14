@@ -5,6 +5,7 @@ import { openDB } from "../../../utils/db";
 import getStringField from "../../../utils/field_cast";
 import calculateExpiryDate from "../../../utils/rotation_date";
 import { parseStringArray } from "../../../utils/helpers";
+import { createUser } from "../../../utils/share";
 
 const { id } = Astro.props;
 
@@ -22,19 +23,24 @@ if (Astro.request.method === "POST") {
   const share_to = getStringField(formData, "share_to");
   const share_to_array = parseStringArray(share_to);
 
+  const values = {
+    resourceId,
+    role,
+    expired_at,
+    next_rotation,
+    rotationPeriod,
+    sharedBy: user?.email,
+  };
+
+  const resource = await db.get("SELECT * FROM resources WHERE id = ?", [resourceId]);
+  const { username, password } = await createUser(resource, values.role);
+
   for (let i = 0; i < share_to_array.length; i++) {
     const userId = share_to_array[i];
+    
     await db.run(
-      "INSERT INTO shares (resource_id, share_to, role, expired_at, next_rotation, rotation_period, shared_by) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [
-        resourceId,
-        userId,
-        role,
-        expired_at,
-        next_rotation,
-        rotationPeriod,
-        user?.email,
-      ],
+      "INSERT INTO shares (resource_id, host, username, password, share_to, role, expired_at, next_rotation, rotation_period, shared_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [values.resourceId, resource.host, username, password, userId, values.role, values.expired_at, values.next_rotation, values.rotationPeriod, values.sharedBy]
     );
   }
 

@@ -2,6 +2,7 @@
 import Forms from "../../../components/Forms.astro";
 import getStringField from "../../../utils/field_cast";
 import { openDB } from "../../../utils/db";
+import { encrypt } from "../../../utils/crypto";
 
 const { dialogId } = Astro.props;
 
@@ -18,24 +19,24 @@ if (Astro.request.method === "POST") {
   if (type === "aws_key") {
     if (isUpdate) {
       query =
-        "UPDATE keys SET type = ?, name = ?, keyID = ?, value = ? WHERE id = ?";
+        "UPDATE keys SET type = ?, name = ?, host = ?, password = ? WHERE id = ?";
       values = [
         type,
         getStringField(formData, "name"),
-        getStringField(formData, "keyID"),
-        getStringField(formData, "value"),
+        getStringField(formData, "host"),
+        encrypt(getStringField(formData, "password")),
         id,
       ];
     } else {
-      query = "INSERT INTO keys (type, name, keyID, value) VALUES (?, ?, ?, ?)";
+      query = "INSERT INTO keys (type, name, host, password) VALUES (?, ?, ?, ?)";
       values = [
         type,
         getStringField(formData, "name"),
-        getStringField(formData, "keyID"),
-        getStringField(formData, "value"),
+        getStringField(formData, "host"),
+        encrypt(getStringField(formData, "password")),
       ];
     }
-  } else if (type === "postgreSQL_access" || type === "mySQL_access") {
+  } else if (type === "postgresql_access" || type === "mysql_access") {
     if (isUpdate) {
       query =
         "UPDATE keys SET type = ?, name = ?, host = ?, username = ?, password = ? WHERE id = ?";
@@ -129,8 +130,8 @@ const getCurrentSuperuserKeys =
             </option>
             <option value="ssh_private_key">SSH Private Key</option>
             <option value="kubeconfig">Kubeconfig</option>
-            <option value="postgreSQL_access">PostgreSQL Access</option>
-            <option value="mySQL_access">MySQL Access</option>
+            <option value="postgresql_access">PostgreSQL Access</option>
+            <option value="mysql_access">MySQL Access</option>
           </select>
         </label>
         <div class="flex flex-col gap-6">
@@ -207,7 +208,7 @@ const getCurrentSuperuserKeys =
             </label>
           </template>
           <template
-            x-if="category_name === 'postgreSQL_access' || category_name === 'mySQL_access'"
+            x-if="category_name === 'postgresql_access' || category_name === 'mysql_access'"
           >
             <div class="flex flex-col gap-6">
               <label>
@@ -266,8 +267,8 @@ const getCurrentSuperuserKeys =
         google_services_account: "Google Services Account",
         ssh_private_key: "SSH Private Key",
         kubeconfig: "Kubeconfig",
-        postgreSQL_access: "PostgreSQL",
-        mySQL_access: "MySQL",
+        postgresql_access: "PostgreSQL",
+        mysql_access: "MySQL",
       },
     };
   }

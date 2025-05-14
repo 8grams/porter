@@ -15,33 +15,36 @@ if (Astro.request.method === "POST") {
   let query = "";
   let values: string[] = [];
 
-  if (type === "aws_iam" || type === "google_iam") {
+  if (type === "aws_iam") {
+    values = [
+      type,
+      getStringField(formData, "name"),
+      encrypt(getStringField(formData, "username")),
+      encrypt(getStringField(formData, "password")),
+      user?.email as string,
+    ];
     if (isUpdate) {
-      query =
-        "UPDATE resources SET type = ?, name = ?, keyID = ?, value = ?, created_by = ? WHERE id = ?";
-      values = [
-        type,
-        getStringField(formData, "name"),
-        encrypt(getStringField(formData, "keyID")),
-        encrypt(getStringField(formData, "value")),
-        user?.email as string,
-        id,
-      ];
+      query = "UPDATE resources SET type = ?, name = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
+      values.push(id);
     } else {
-      query =
-        "INSERT INTO resources (type, name, keyID, value, created_by) VALUES (?, ?, ?, ?, ?)";
-      values = [
-        type,
-        getStringField(formData, "name"),
-        encrypt(getStringField(formData, "keyID")),
-        encrypt(getStringField(formData, "value")),
-        user?.email as string,
-      ];
+      query = "INSERT INTO resources (type, name, username, password, created_by) VALUES (?, ?, ?, ?, ?)"; 
+    }
+  } else if (type === "google_iam") {
+    values = [
+      type,
+      getStringField(formData, "name"),
+      getStringField(formData, "host"),
+      encrypt(getStringField(formData, "password")),
+      user?.email as string,
+    ];
+    if (isUpdate) {
+      query = "UPDATE resources SET type = ?, name = ?, host = ?, password = ?, created_by = ? WHERE id = ?";
+      values.push(id);
+    } else {
+      query = "INSERT INTO resources (type, name, host, password, created_by) VALUES (?, ?, ?, ?, ?)";
     }
   } else if (type === "postgresql_access" || type === "mysql_access") {
     if (isUpdate) {
-      query =
-        "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
       values = [
         type,
         getStringField(formData, "name"),
@@ -49,63 +52,38 @@ if (Astro.request.method === "POST") {
         encrypt(getStringField(formData, "username")),
         encrypt(getStringField(formData, "password")),
         user?.email as string,
-        id,
       ];
+      query = "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
+      values.push(id);
     } else {
-      query =
-        "INSERT INTO resources (type, name, host, username, password, created_by) VALUES (?, ?, ?, ?, ?, ?)";
-      values = [
-        type,
-        getStringField(formData, "name"),
-        getStringField(formData, "host"),
-        encrypt(getStringField(formData, "username")),
-        encrypt(getStringField(formData, "password")),
-        user?.email as string,
-      ];
+      query = "INSERT INTO resources (type, name, host, username, password, created_by) VALUES (?, ?, ?, ?, ?, ?)";
     }
   } else if (type === "vm") {
+    values = [
+      type,
+      getStringField(formData, "name"),
+      getStringField(formData, "host"),
+      encrypt(getStringField(formData, "password")),
+      user?.email as string,
+    ];
     if (isUpdate) {
-      query =
-        "UPDATE resources SET type = ?, name = ?, host = ?, value = ?, created_by = ? WHERE id = ?";
-      values = [
-        type,
-        getStringField(formData, "name"),
-        getStringField(formData, "host"),
-        encrypt(getStringField(formData, "value")),
-        user?.email as string,
-        id,
-      ];
+      query = "UPDATE resources SET type = ?, name = ?, host = ?, password = ?, created_by = ? WHERE id = ?";
+      values.push(id);
     } else {
-      query =
-        "INSERT INTO resources (type, name, host, value, created_by) VALUES (?, ?, ?, ?, ?)";
-      values = [
-        type,
-        getStringField(formData, "name"),
-        getStringField(formData, "host"),
-        encrypt(getStringField(formData, "value")),
-        user?.email as string,
-      ];
+      query = "INSERT INTO resources (type, name, host, password, created_by) VALUES (?, ?, ?, ?, ?)";
     }
   } else {
+    values = [
+      type,
+      getStringField(formData, "name"),
+      encrypt(getStringField(formData, "password")),
+      user?.email as string,
+    ];
     if (isUpdate) {
-      query =
-        "UPDATE resources SET type = ?, name = ?, value = ?, created_by = ? WHERE id = ?";
-      values = [
-        type,
-        getStringField(formData, "name"),
-        encrypt(getStringField(formData, "value")),
-        user?.email as string,
-        id,
-      ];
+      query = "UPDATE resources SET type = ?, name = ?, password = ?, created_by = ? WHERE id = ?";
+      values.push(id);
     } else {
-      query =
-        "INSERT INTO resources (type, name, value, created_by) VALUES (?, ?, ?, ?)";
-      values = [
-        type,
-        getStringField(formData, "name"),
-        encrypt(getStringField(formData, "value")),
-        user?.email as string,
-      ];
+      query = "INSERT INTO resources (type, name, password, created_by) VALUES (?, ?, ?, ?)";
     }
   }
   await db.run(query, values);
@@ -177,21 +155,21 @@ const getCurrentResources =
               <label>
                 <textarea
                   class="textarea w-full rounded-none"
-                  name="keyID"
+                  name="username"
                   required
                   placeholder="Access Key ID"
-                  value={decrypt(getCurrentResources?.keyID)}
-                  >{decrypt(getCurrentResources?.keyID)}</textarea
+                  value={decrypt(getCurrentResources?.username)}
+                  >{decrypt(getCurrentResources?.username)}</textarea
                 >
               </label>
               <label>
                 <textarea
                   class="textarea w-full rounded-none"
-                  name="value"
+                  name="password"
                   required
                   placeholder="Secret Access Key"
-                  value={decrypt(getCurrentResources?.value)}
-                  >{decrypt(getCurrentResources?.value)}</textarea
+                  value={decrypt(getCurrentResources?.password)}
+                  >{decrypt(getCurrentResources?.password)}</textarea
                 >
               </label>
             </div>
@@ -202,20 +180,20 @@ const getCurrentResources =
                 <input
                   type="text"
                   placeholder="Project ID"
-                  name="keyID"
+                  name="host"
                   class="input w-full rounded-none"
                   required
-                  value={decrypt(getCurrentResources?.keyID) || ""}
+                  value={decrypt(getCurrentResources?.host) || ""}
                 />
               </label>
               <label>
                 <textarea
                   class="textarea w-full rounded-none"
-                  name="value"
+                  name="password"
                   required
                   placeholder="Service Account Key"
-                  value={decrypt(getCurrentResources?.value)}
-                  >{decrypt(getCurrentResources?.value)}</textarea
+                  value={decrypt(getCurrentResources?.password)}
+                  >{decrypt(getCurrentResources?.password)}</textarea
                 >
               </label>
             </div>
@@ -235,11 +213,11 @@ const getCurrentResources =
               <label>
                 <textarea
                   class="textarea w-full rounded-none"
-                  name="value"
+                  name="password"
                   required
                   placeholder="SSH Key"
-                  value={decrypt(getCurrentResources?.value)}
-                  >{decrypt(getCurrentResources?.value)}</textarea
+                  value={decrypt(getCurrentResources?.password)}
+                  >{decrypt(getCurrentResources?.password)}</textarea
                 >
               </label>
             </div>
@@ -248,11 +226,11 @@ const getCurrentResources =
             <label>
               <textarea
                 class="textarea w-full rounded-none"
-                name="value"
+                name="password"
                 required
                 placeholder="Kubeconfig"
-                value={decrypt(getCurrentResources?.value)}
-                >{decrypt(getCurrentResources?.value)}</textarea
+                value={decrypt(getCurrentResources?.password)}
+                >{decrypt(getCurrentResources?.password)}</textarea
               >
             </label>
           </template>

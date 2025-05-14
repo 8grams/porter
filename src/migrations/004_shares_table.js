@@ -8,6 +8,9 @@ export async function up(db) {
       expired_at DATETIME,
       next_rotation DATETIME,
       role TEXT,
+      host TEXT,
+      username TEXT,
+      password TEXT,
       shared_by TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
