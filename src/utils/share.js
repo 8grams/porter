@@ -537,7 +537,7 @@ export async function deleteK8sUser(resource, username) {
   }
 }
 
-export async function createSshUser(resource, permission) {
+export async function createSshUser(resource, role) {
   const ssh = new NodeSSH();
   const username = createRandomUsername(`ssh_${resource.id}`);
   const tempDir = mkdtempSync(join(tmpdir(), 'ssh-keys-'));
@@ -561,21 +561,21 @@ export async function createSshUser(resource, permission) {
       privateKey: decrypt(resource.password)
     });
     
-    // Create user with appropriate permissions
-    if (permission === 'viewer') {
-      // Create a regular user with limited permissions
+    // Create user with appropriate roles
+    if (role === 'viewer') {
+      // Create a regular user with limited roles
       await ssh.execCommand(`useradd -m -s /bin/bash ${username}`);
-    } else if (permission === 'editor') {
+    } else if (role === 'editor') {
       // Create a user with sudo access for specific commands
       await ssh.execCommand(`useradd -m -s /bin/bash ${username}`);
       await ssh.execCommand(`echo "${username} ALL=(ALL) /bin/ls, /usr/bin/apt, /usr/bin/apt-get" | tee /etc/sudoers.d/${username}`);
-    } else if (permission === 'admin') {
+    } else if (role === 'admin') {
       // Create a user with full sudo access
       await ssh.execCommand(`useradd -m -s /bin/bash ${username}`);
       await ssh.execCommand(`usermod -aG sudo ${username}`);
     }
     
-    // Create .ssh directory and set permissions
+    // Create .ssh directory and set roles
     await ssh.execCommand(`mkdir -p /home/${username}/.ssh`);
     await ssh.execCommand(`echo "${publicKey}" > /home/${username}/.ssh/authorized_keys`);
     await ssh.execCommand(`chown -R ${username}:${username} /home/${username}/.ssh`);
@@ -660,62 +660,62 @@ users:
 `;
 }
 
-export function createUser(resource, permission) {
+export function createUser(resource, role) {
   switch (resource.type) {
     case "postgresql_access":
-      if (permission == "viewer") {
+      if (role == "viewer") {
         return createViewerPgUser(resource);
-      } else if (permission == "editor") {
+      } else if (role == "editor") {
         return createEditorPgUser(resource);
-      } else if (permission == "superuser") {
+      } else if (role == "superuser") {
         return createAdminPgUser(resource);
       }
     case "mysql_access":
-      if (permission == "viewer") {
+      if (role == "viewer") {
         return createViewerMysqlUser(resource);
-      } else if (permission == "editor") {
+      } else if (role == "editor") {
         return createEditorMysqlUser(resource);
-      } else if (permission == "superuser") {
+      } else if (role == "superuser") {
         return createSuperuserMysqlUser(resource);
       }
     case "google_iam":
-      if (permission == "viewer") {
+      if (role == "viewer") {
         return createViewerGcpUser(resource);
-      } else if (permission == "editor") {
+      } else if (role == "editor") {
         return createEditorGcpUser(resource);
-      } else if (permission == "superuser") {
+      } else if (role == "superuser") {
         return createAdminGcpUser(resource);
       }
     case "vm":
-      if (permission == "viewer") {
+      if (role == "viewer") {
         return createViewerAwsUser(resource);
-      } else if (permission == "editor") {
+      } else if (role == "editor") {
         return createEditorAwsUser(resource);
-      } else if (permission == "superuser") {
+      } else if (role == "superuser") {
         return createAdminAwsUser(resource);
       }
     case "gcp_iam":
-      if (permission == "viewer") {
+      if (role == "viewer") {
         return createViewerGcpUser(resource);
-      } else if (permission == "editor") {
+      } else if (role == "editor") {
         return createEditorGcpUser(resource);
-      } else if (permission == "superuser") {
+      } else if (role == "superuser") {
         return createAdminGcpUser(resource);
       }
     case "aws_iam":
-      if (permission == "viewer") {
+      if (role == "viewer") {
         return createViewerAwsUser(resource);
-      } else if (permission == "editor") {
+      } else if (role == "editor") {
         return createEditorAwsUser(resource);
-      } else if (permission == "superuser") {
+      } else if (role == "superuser") {
         return createAdminAwsUser(resource);
       }
     case "kubernetes":
-      if (permission == "viewer") {
+      if (role == "viewer") {
         return createViewerK8sUser(resource);
-      } else if (permission == "editor") {
+      } else if (role == "editor") {
         return createEditorK8sUser(resource);
-      } else if (permission == "admin") {
+      } else if (role == "admin") {
         return createAdminK8sUser(resource);
       }
     default:
