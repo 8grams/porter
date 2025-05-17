@@ -1,7 +1,6 @@
 ---
-import Forms from "../../../../components/Forms.astro";
-import { openDB } from "../../../../utils/db";
-const { id } = Astro.props;
+import Forms from "../../../components/Forms.astro";
+import { openDB } from "../../../utils/db";
 
 const db = await openDB();
 
@@ -20,14 +19,9 @@ if (Astro.request.method === "POST") {
   }
   return Astro.redirect("/dashboard/settings/eligible-users");
 }
-
-const getCurrentUser =
-  id === "new"
-    ? null
-    : await db.get("SELECT * FROM eligible_users WHERE id = ?", [id]);
 ---
 
-<dialog class="modal" id={`modal_eligible_${id}`}>
+<dialog class="modal" id="modal_eligible">
   <div class="modal-box">
     <form method="dialog">
       <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -36,13 +30,15 @@ const getCurrentUser =
     </form>
     <Forms
       class="flex flex-col gap-6"
-      action="/dashboard/settings/eligible-users/modal-eligible-users"
+      action="/dashboard/settings/modal-eligible-users"
       method="POST"
     >
-      <h2 class="card-title justify-center">
-        {id === "new" ? "New" : "Update"} User
+      <h2
+        class="card-title justify-center"
+        x-text="selectedUser?.id ? 'Edit User' : 'New User'"
+      >
       </h2>
-      <input type="hidden" name="id" value={getCurrentUser?.id || ""} />
+      <input type="hidden" name="id" :value="selectedUser?.id" />
       <div class="flex flex-col gap-2">
         <label for="email">Email</label>
         <input
@@ -52,7 +48,7 @@ const getCurrentUser =
           placeholder="Email"
           class="input input-bordered w-full rounded-none"
           required
-          value={getCurrentUser?.email}
+          :value="selectedUser?.email"
         />
       </div>
       <button class="btn btn-neutral w-full rounded-none" type="submit"

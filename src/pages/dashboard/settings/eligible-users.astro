@@ -1,7 +1,7 @@
 ---
-import Dashboard from "../../../../layouts/Dashboard.astro";
-import { ICONS } from "../../../../constants";
-import { openDB } from "../../../../utils/db";
+import Dashboard from "../../../layouts/Dashboard.astro";
+import { ICONS } from "../../../constants";
+import { openDB } from "../../../utils/db";
 import ModalEligibleUsers from "./modal-eligible-users.astro";
 import DeleteEligibleUsers from "./delete-eligible-users.astro";
 
@@ -14,16 +14,16 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users");
   <section
     slot="content"
     class="card bg-white w-full rounded-none py-12 px-12 shadow-sm"
+    x-data="{ selectedUser: null, selectedUserId: null }"
   >
     <div class="flex justify-between items-center gap-4 flex-wrap mb-6">
       <h2 class="text-xl font-semibold">Eligible Users</h2>
       <button
         class="btn btn-neutral rounded-none w-[140px]"
-        onclick="modal_eligible_new.showModal()"
+        x-on:click="selectedUser = null; selectedUserId = null; document.getElementById('modal_eligible').showModal()"
       >
         Create
       </button>
-      <ModalEligibleUsers id={"new"} />
     </div>
     <div
       class="overflow-x-auto"
@@ -58,9 +58,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users");
         <table class="table">
           <thead>
             <tr>
-              <th>
-                No.
-              </th>
+              <th> No. </th>
               <th class="text-black">Email</th>
               <th></th>
             </tr>
@@ -70,28 +68,25 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users");
               eligibleUsers.length > 0 &&
                 eligibleUsers.map((user: any, index: number) => (
                   <tr>
-                    <td>
-                      {index + 1}.
-                    </td>
+                    <td>{index + 1}.</td>
                     <td class="text-black">{user.email}</td>
                     <td class="relative">
                       <div class="flex gap-4 items-center">
                         <button
                           class="cursor-pointer"
                           data-id={user.id}
-                          @click="document.getElementById('modal_eligible_' + $el.dataset.id).showModal()"
+                          data-user={JSON.stringify(user)}
+                          x-on:click="selectedUser = JSON.parse($el.dataset.user); selectedUserId = $el.dataset.id; document.getElementById('modal_eligible').showModal()"
                         >
                           <ICONS.edit class="fill-black" />
                         </button>
                         <button
                           class="cursor-pointer"
                           data-id={user.id}
-                          @click="document.getElementById('delete_modal_eligible_' + $el.dataset.id).showModal()"
+                          x-on:click="selectedUserId = $el.dataset.id; document.getElementById('delete_modal_eligible').showModal()"
                         >
                           <ICONS.delete class="fill-black" />
                         </button>
-                        <DeleteEligibleUsers id={user.id} />
-                        <ModalEligibleUsers id={user.id} />
                       </div>
                     </td>
                   </tr>
@@ -101,5 +96,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users");
         </table>
       </div>
     </div>
+    <DeleteEligibleUsers slot="dialog" />
+    <ModalEligibleUsers slot="dialog" />
   </section>
 </Dashboard>
