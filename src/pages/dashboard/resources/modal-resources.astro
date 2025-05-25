@@ -27,7 +27,7 @@ if (Astro.request.method === "POST") {
       query = "UPDATE resources SET type = ?, name = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
       values.push(id);
     } else {
-      query = "INSERT INTO resources (type, name, username, password, created_by) VALUES (?, ?, ?, ?, ?)"; 
+      query = "INSERT INTO resources (type, name, username, password, created_by) VALUES (?, ?, ?, ?, ?)";
     }
   } else if (type === "google_iam") {
     values = [
@@ -89,16 +89,9 @@ if (Astro.request.method === "POST") {
   await db.run(query, values);
   return Astro.redirect("/dashboard/resources");
 }
-
-const { id } = Astro.props;
-
-const getCurrentResources =
-  id === "create"
-    ? null
-    : await db.get("SELECT * FROM resources WHERE id = ?", [id]);
 ---
 
-<dialog slot="dialog" class="modal" id={`modal_resources_${id}`}>
+<dialog slot="dialog" class="modal" id="modal_resources">
   <div class="modal-box">
     <form method="dialog">
       <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -108,18 +101,17 @@ const getCurrentResources =
     <Forms
       class="flex flex-col gap-6"
       method="POST"
-      data-dialog-id={id}
-      data-current-resources={JSON.stringify(getCurrentResources) || {}}
       action="/dashboard/resources/modal-resources"
-      x-data="formHandler($el.getAttribute('data-dialog-id'), $el.getAttribute('data-current-resources'))"
+      x-data="formHandler()"
+      x-effect="syncResource(selectedResource)"
     >
       <div class="flex flex-col gap-4">
         <h1
           class="text-xl font-bold"
-          x-text="titles[category_name] ? `${titles[category_name]} - ${typeDialog}` : typeDialog"
+          x-text="titles[category_name] ? `${titles[category_name]} - ${selectedResourceId ? 'Update' : 'Create'}` : selectedResourceId ? 'Update' : 'Create'"
         >
         </h1>
-        <input type="hidden" name="id" value={getCurrentResources?.id || ""} />
+        <input type="hidden" name="id" :value="selectedResource?.id" />
         <label>
           <input type="hidden" name="type" :value="category_name" />
           <select
@@ -146,7 +138,7 @@ const getCurrentResources =
                 name="name"
                 class="input w-full rounded-none"
                 required
-                value={getCurrentResources?.name || ""}
+                :value="selectedResource?.name || ''"
               />
             </label>
           </template>
@@ -158,9 +150,9 @@ const getCurrentResources =
                   name="username"
                   required
                   placeholder="Access Key ID"
-                  value={decrypt(getCurrentResources?.username)}
-                  >{decrypt(getCurrentResources?.username)}</textarea
+                  :value="selectedResource?.username || ''"
                 >
+                </textarea>
               </label>
               <label>
                 <textarea
@@ -168,9 +160,8 @@ const getCurrentResources =
                   name="password"
                   required
                   placeholder="Secret Access Key"
-                  value={decrypt(getCurrentResources?.password)}
-                  >{decrypt(getCurrentResources?.password)}</textarea
-                >
+                  :value="selectedResource?.password || ''"
+                  ></textarea>
               </label>
             </div>
           </template>
@@ -183,7 +174,7 @@ const getCurrentResources =
                   name="host"
                   class="input w-full rounded-none"
                   required
-                  value={decrypt(getCurrentResources?.host) || ""}
+                  :value="selectedResource?.host || ''"
                 />
               </label>
               <label>
@@ -192,8 +183,8 @@ const getCurrentResources =
                   name="password"
                   required
                   placeholder="Service Account Key"
-                  value={decrypt(getCurrentResources?.password)}
-                  >{decrypt(getCurrentResources?.password)}</textarea
+                  :value="selectedResource?.password || ''"
+                  ></textarea
                 >
               </label>
             </div>
@@ -206,8 +197,8 @@ const getCurrentResources =
                   placeholder="Host"
                   name="host"
                   required
-                  value={getCurrentResources?.host || ""}
                   class="input w-full rounded-none"
+                  :value="selectedResource?.host || ''"
                 />
               </label>
               <label>
@@ -216,8 +207,8 @@ const getCurrentResources =
                   placeholder="Username"
                   name="username"
                   required
-                  value={getCurrentResources?.username || ""}
                   class="input w-full rounded-none"
+                  :value="selectedResource?.username || ''"
                 />
               </label>
               <label>
@@ -226,8 +217,8 @@ const getCurrentResources =
                   name="password"
                   required
                   placeholder="SSH Key"
-                  value={decrypt(getCurrentResources?.password)}
-                  >{decrypt(getCurrentResources?.password)}</textarea
+                  :value="selectedResource?.password || ''"
+                  ></textarea
                 >
               </label>
             </div>
@@ -239,8 +230,8 @@ const getCurrentResources =
                 name="password"
                 required
                 placeholder="Kubeconfig"
-                value={decrypt(getCurrentResources?.password)}
-                >{decrypt(getCurrentResources?.password)}</textarea
+                :value="selectedResource?.password || ''"
+                ></textarea
               >
             </label>
           </template>
@@ -257,8 +248,8 @@ const getCurrentResources =
                   placeholder="Host"
                   name="host"
                   required
-                  value={(getCurrentResources?.host) || ""}
                   class="input w-full rounded-none"
+                  :value="selectedResource?.host || ''"
                 />
               </label>
               <label>
@@ -267,8 +258,8 @@ const getCurrentResources =
                   placeholder="Username"
                   name="username"
                   required
-                  value={decrypt(getCurrentResources?.username) || ""}
                   class="input w-full rounded-none"
+                  :value="selectedResource?.username || ''"
                 />
               </label>
               <label class="relative">
@@ -277,9 +268,9 @@ const getCurrentResources =
                   placeholder="Password"
                   name="password"
                   required
-                  value={decrypt(getCurrentResources?.password) || ""}
                   class="input w-full rounded-none pr-10"
                   x-ref="passwordInput"
+                  :value="selectedResource?.password || ''"
                 />
                 <button
                   type="button"
@@ -330,16 +321,9 @@ const getCurrentResources =
   </div>
 </dialog>
 <script slot="script" is:inline>
-  function formHandler(dialogId, getCurrentResources) {
-    let parsedKeys = {};
-    try {
-      parsedKeys = JSON.parse(getCurrentResources || "{}");
-    } catch (e) {
-      console.error("Failed to parse superuser keys:", e);
-    }
+  function formHandler() {
     return {
-      typeDialog: dialogId === "create" ? "New Resource" : "Update Resource",
-      category_name: dialogId === "create" ? "" : parsedKeys?.type,
+      category_name: '',
       titles: {
         aws_iam: "AWS IAM",
         google_iam: "Google IAM",
@@ -348,6 +332,13 @@ const getCurrentResources =
         postgresql_access: "PostgreSQL",
         mysql_access: "MySQL",
       },
+      syncResource(selectedResource) {
+        if (selectedResource) {
+          this.category_name = selectedResource?.type;
+        } else {
+          this.category_name = '';
+        }
+      }
     };
   }
 </script>

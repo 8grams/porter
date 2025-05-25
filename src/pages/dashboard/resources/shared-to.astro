@@ -4,7 +4,7 @@ import { ICONS } from "../../../constants";
 import Forms from "../../../components/Forms.astro";
 import getStringField from "../../../utils/field_cast";
 
-const { resourceId } = Astro.props;
+const resourceId = Astro.url.searchParams.get("resourceId")
 
 const db = await openDB();
 
@@ -28,7 +28,7 @@ JOIN
 );
 ---
 
-<dialog id={`shared_to_${resourceId}`} class="modal">
+<dialog id="shared_to" class="modal">
   <div class="modal-box max-w-3xl">
     <form method="dialog">
       <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"

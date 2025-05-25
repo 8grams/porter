@@ -7,6 +7,7 @@ import Services from "../../../utils/services";
 import DeleteResources from "./delete-resources.astro";
 import ShareResources from "./share-resources.astro";
 import SharedTo from "./shared-to.astro";
+import { decrypt } from "../../../utils/crypto";
 
 const { user } = Astro.locals;
 const db = await openDB();
@@ -40,12 +41,22 @@ if (type === "all_types") {
     );
   }
 }
+
+const mappedResource = resources.map((r: any) => {
+  return {
+    ...r,
+    hosts: decrypt(r.hosts),
+    username: decrypt(r.username),
+    password: decrypt(r.password),
+  };
+});
 ---
 
 <Dashboard pageTitle="Resource">
   <section
     slot="content"
     class="card bg-white w-full rounded-none py-12 px-12 shadow-sm flex flex-col gap-8"
+    x-data="{ selectedResource: null, selectedResourceId: null }"
   >
     <div class="flex justify-between items-center gap-4 flex-wrap">
       <h2 class="text-xl font-semibold">Resources</h2>
@@ -124,17 +135,16 @@ if (type === "all_types") {
         </label>
         <button
           class="btn btn-neutral rounded-none w-[140px]"
-          onclick="modal_resources_create.showModal()"
+          x-on:click="selectedResource = null; selectedResourceId = null; document.getElementById('modal_resources').showModal()"
         >
           Create
         </button>
-        <ModalResources id="create" />
       </div>
     </div>
     <div class="grid grid-cols-4 gap-6">
       {
-        resources.length > 0 &&
-          resources.map((resource: any) => {
+        mappedResource.length > 0 &&
+          mappedResource.map((resource: any) => {
             const IconComponent =
               ServicesIcons[resource.type as keyof typeof ServicesIcons];
             return (
@@ -142,21 +152,40 @@ if (type === "all_types") {
                 <div class="absolute top-2 -right-1">
                   <div class="dropdown dropdown-end">
                     <button class="btn btn-ghost btn-xs">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="1"/>
-                        <circle cx="12" cy="5" r="1"/>
-                        <circle cx="12" cy="19" r="1"/>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="1" />
+                        <circle cx="12" cy="5" r="1" />
+                        <circle cx="12" cy="19" r="1" />
                       </svg>
                     </button>
                     <ul class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
                       <li>
                         <button
                           data-id={resource.id}
-                          onclick="document.getElementById('modal_resources_' + this.dataset.id).showModal()"
+                          data-resource={JSON.stringify(resource)}
+                          x-on:click="selectedResource = JSON.parse($el.dataset.resource); selectedResourceId = $el.dataset.id; document.getElementById('modal_resources').showModal()"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
-                            <path d="m15 5 4 4"/>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                            <path d="m15 5 4 4" />
                           </svg>
                           Edit
                         </button>
@@ -164,14 +193,23 @@ if (type === "all_types") {
                       <li>
                         <button
                           data-id={resource.id}
-                          onclick="document.getElementById('share_resource_' + this.dataset.id).showModal()"
+                          x-on:click="selectedResourceId = $el.dataset.id; document.getElementById('share_resource').showModal();"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="18" cy="5" r="3"/>
-                            <circle cx="6" cy="12" r="3"/>
-                            <circle cx="18" cy="19" r="3"/>
-                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
-                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <circle cx="18" cy="5" r="3" />
+                            <circle cx="6" cy="12" r="3" />
+                            <circle cx="18" cy="19" r="3" />
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                           </svg>
                           Share
                         </button>
@@ -180,14 +218,23 @@ if (type === "all_types") {
                         <button
                           class="text-error"
                           data-id={resource.id}
-                          onclick="document.getElementById('delete_resource_modal_' + this.dataset.id).showModal()"
+                          x-on:click="selectedResourceId = $el.dataset.id; document.getElementById('delete_resource_modal').showModal()"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 6h18"/>
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                            <line x1="10" x2="10" y1="11" y2="17"/>
-                            <line x1="14" x2="14" y1="11" y2="17"/>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                            <line x1="10" x2="10" y1="11" y2="17" />
+                            <line x1="14" x2="14" y1="11" y2="17" />
                           </svg>
                           Delete
                         </button>
@@ -228,26 +275,28 @@ if (type === "all_types") {
                       )}
                       <div class="flex items-center justify-between gap-4">
                         <p class="text-gray-700">Shared to</p>
-                        <button
-                          class="cursor-pointer flex items-center justify-end"
-                          data-id={resource.id}
-                          onclick="document.getElementById('shared_to_' + this.dataset.id).showModal()"
+                        <a
+                            class="cursor-pointer flex items-center justify-end"
+                            data-id={resource.id}
+                            href="#"
+                            @click.prevent="resourceId = $el.dataset.id; document.getElementById('shared_to').showModal(); const p=new URLSearchParams(window.location.search); p.delete('resourceId'); p.append('resourceId', resourceId); history.pushState({}, '', window.location.pathname + '?' + p.toString())"
                         >
                           <ICONS.users class="fill-black w-5 h-5" />
-                        </button>
-                        <SharedTo resourceId={resource.id} />
+                        </a>
+
                       </div>
                     </div>
                   </div>
-                  <DeleteResources id={resource.id} />
-                  <ModalResources id={resource.id} />
-                  <ShareResources id={resource.id} />
                 </div>
               </div>
             );
           })
       }
     </div>
+    <DeleteResources />
+    <ModalResources />
+    <ShareResources />
+    <SharedTo />
   </section>
 </Dashboard>
 <script is:inline>

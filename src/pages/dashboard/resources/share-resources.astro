@@ -35,7 +35,7 @@ if (Astro.request.method === "POST") {
 
   for (let i = 0; i < share_to_array.length; i++) {
     const userId = share_to_array[i];
-    
+
     await db.run(
       "INSERT INTO shares (resource_id, host, username, password, share_to, role, expired_at, next_rotation, rotation_period, shared_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [values.resourceId, resource.host, username, password, userId, values.role, values.expired_at, values.next_rotation, values.rotationPeriod, values.sharedBy]
@@ -48,7 +48,7 @@ if (Astro.request.method === "POST") {
 const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
 ---
 
-<dialog slot="dialog" class="modal" id={`share_resource_${id}`}>
+<dialog slot="dialog" class="modal" id="share_resource">
   <div class="modal-box">
     <form method="dialog">
       <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -62,7 +62,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
     >
       <h2 class="card-title justify-center">Share Resource</h2>
       <UsersFilter eligibleUsers={eligibleUsers} />
-      <input type="hidden" name="resource_id" value={id} />
+      <input type="hidden" name="resource_id" :value="selectedResourceId" />
       <div class="flex flex-col gap-6">
         <label>
           <select
