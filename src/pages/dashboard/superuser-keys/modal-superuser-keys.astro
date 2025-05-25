@@ -4,8 +4,6 @@ import getStringField from "../../../utils/field_cast";
 import { openDB } from "../../../utils/db";
 import { encrypt } from "../../../utils/crypto";
 
-const { dialogId } = Astro.props;
-
 const db = await openDB();
 
 if (Astro.request.method === "POST") {
@@ -19,20 +17,20 @@ if (Astro.request.method === "POST") {
   if (type === "aws_key") {
     if (isUpdate) {
       query =
-        "UPDATE keys SET type = ?, name = ?, host = ?, password = ? WHERE id = ?";
+        "UPDATE keys SET type = ?, name = ?, username = ?, password = ? WHERE id = ?";
       values = [
         type,
         getStringField(formData, "name"),
-        getStringField(formData, "host"),
+        encrypt(getStringField(formData, "username")),
         encrypt(getStringField(formData, "password")),
         id,
       ];
     } else {
-      query = "INSERT INTO keys (type, name, host, password) VALUES (?, ?, ?, ?)";
+      query = "INSERT INTO keys (type, name, username, password) VALUES (?, ?, ?, ?)";
       values = [
         type,
         getStringField(formData, "name"),
-        getStringField(formData, "host"),
+        encrypt(getStringField(formData, "username")),
         encrypt(getStringField(formData, "password")),
       ];
     }
@@ -81,14 +79,9 @@ if (Astro.request.method === "POST") {
   await db.run(query, values);
   return Astro.redirect("/dashboard/superuser-keys");
 }
-
-const getCurrentSuperuserKeys =
-  dialogId === "create"
-    ? null
-    : await db.get("SELECT * FROM keys WHERE id = ?", [dialogId]);
 ---
 
-<dialog slot="dialog" class="modal" id={`modal_superuser_${dialogId}`}>
+<dialog slot="dialog" class="modal" id="modal_superuser">
   <div class="modal-box">
     <form method="dialog">
       <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
@@ -96,22 +89,21 @@ const getCurrentSuperuserKeys =
       >
     </form>
     <Forms
-      x-data="formHandler($el.getAttribute('data-dialog-id'), $el.getAttribute('data-superuser-keys'))"
+      x-data="formHandler()"
       class="flex flex-col gap-6"
       action="/dashboard/superuser-keys/modal-superuser-keys"
       method="POST"
-      data-dialog-id={dialogId}
-      data-superuser-keys={JSON.stringify(getCurrentSuperuserKeys) || {}}
+      x-effect="syncSuperUserKeys(selectedSuperUserKey)"
     >
       <input
         type="hidden"
         name="id"
-        value={getCurrentSuperuserKeys?.id || ""}
+        :value="selectedSuperUserKey?.id || ''"
       />
       <div class="flex flex-col gap-4">
         <h1
           class="text-xl font-bold"
-          x-text="titles[category_name] ? `${titles[category_name]} - ${typeDialog}` : typeDialog"
+          x-text="titles[category_name] ? `${titles[category_name]} - ${selectedSuperUserKeyId ? 'Update' : 'Create'}` : selectedSuperUserKeyId ? 'Update' : 'Create'"
         >
         </h1>
         <label>
@@ -143,7 +135,7 @@ const getCurrentSuperuserKeys =
                 name="name"
                 class="input w-full rounded-none"
                 required
-                value={getCurrentSuperuserKeys?.name || ""}
+                :value="selectedSuperUserKey?.name || ''"
               />
             </label>
           </template>
@@ -152,21 +144,21 @@ const getCurrentSuperuserKeys =
               <label>
                 <textarea
                   class="textarea w-full rounded-none"
-                  name="keyID"
+                  name="username"
                   required
                   placeholder="Access Key Id"
-                  value={getCurrentSuperuserKeys?.value}
-                  >{getCurrentSuperuserKeys?.value}</textarea
+                  :value="selectedSuperUserKey?.username || ''"
+                  ></textarea
                 >
               </label>
               <label>
                 <textarea
                   class="textarea w-full rounded-none"
-                  name="value"
+                  name="password"
                   required
                   placeholder="Secret Access Key"
-                  value={getCurrentSuperuserKeys?.value}
-                  >{getCurrentSuperuserKeys?.value}</textarea
+                  :value="selectedSuperUserKey?.password || ''"
+                  ></textarea
                 >
               </label>
             </div>
@@ -178,8 +170,8 @@ const getCurrentSuperuserKeys =
                 name="value"
                 required
                 placeholder="Service Account Key"
-                value={getCurrentSuperuserKeys?.value}
-                >{getCurrentSuperuserKeys?.value}</textarea
+                :value="selectedSuperUserKey?.value || ''"
+                ></textarea
               >
             </label>
           </template>
@@ -190,8 +182,8 @@ const getCurrentSuperuserKeys =
                 name="value"
                 required
                 placeholder="SSH Private Key"
-                value={getCurrentSuperuserKeys?.value}
-                >{getCurrentSuperuserKeys?.value}</textarea
+                :value="selectedSuperUserKey?.value || ''"
+                ></textarea
               >
             </label>
           </template>
@@ -202,8 +194,8 @@ const getCurrentSuperuserKeys =
                 name="value"
                 required
                 placeholder="Kubeconfig"
-                value={getCurrentSuperuserKeys?.value}
-                >{getCurrentSuperuserKeys?.value}</textarea
+                :value="selectedSuperUserKey?.value || ''"
+                ></textarea
               >
             </label>
           </template>
@@ -217,7 +209,7 @@ const getCurrentSuperuserKeys =
                   placeholder="Host"
                   name="host"
                   required
-                  value={getCurrentSuperuserKeys?.host || ""}
+                  :value="selectedSuperUserKey?.host || ''"
                   class="input w-full rounded-none"
                 />
               </label>
@@ -227,7 +219,7 @@ const getCurrentSuperuserKeys =
                   placeholder="Username"
                   name="username"
                   required
-                  value={getCurrentSuperuserKeys?.username || ""}
+                  :value="selectedSuperUserKey?.username || ''"
                   class="input w-full rounded-none"
                 />
               </label>
@@ -237,7 +229,7 @@ const getCurrentSuperuserKeys =
                   placeholder="Password"
                   name="password"
                   required
-                  value={getCurrentSuperuserKeys?.password || ""}
+                  :value="selectedSuperUserKey?.password || ''"
                   class="input w-full rounded-none"
                 />
               </label>
@@ -252,16 +244,9 @@ const getCurrentSuperuserKeys =
   </div>
 </dialog>
 <script slot="script" is:inline>
-  function formHandler(dialogId, getCurrentSuperuserKeys) {
-    let parsedKeys = {};
-    try {
-      parsedKeys = JSON.parse(getCurrentSuperuserKeys || "{}");
-    } catch (e) {
-      console.error("Failed to parse superuser keys:", e);
-    }
+  function formHandler() {
     return {
-      typeDialog: dialogId === "create" ? "Create" : "Update",
-      category_name: dialogId === "create" ? "" : parsedKeys?.type,
+      category_name: '',
       titles: {
         aws_key: "AWS Key",
         google_services_account: "Google Services Account",
@@ -269,6 +254,10 @@ const getCurrentSuperuserKeys =
         kubeconfig: "Kubeconfig",
         postgresql_access: "PostgreSQL",
         mysql_access: "MySQL",
+      },
+      syncSuperUserKeys(selectedSuperUserKey) {
+        console.log(selectedSuperUserKey)
+        this.category_name = selectedSuperUserKey?.type || '';
       },
     };
   }

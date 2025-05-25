@@ -5,6 +5,7 @@ import { openDB } from "../../../utils/db";
 import { ICONS } from "../../../constants";
 import Services from "../../../utils/services";
 import DeleteUserKeys from "./delete-user-keys.astro";
+import { decrypt } from "../../../utils/crypto"
 
 const db = await openDB();
 
@@ -30,12 +31,21 @@ if (type === "all_types") {
     superuserKeys = await db.all(`SELECT * FROM keys WHERE type = ?`, [type]);
   }
 }
+
+const mappedSuper = superuserKeys.map((key: any) => {
+  return {
+    ...key,
+    password: decrypt(key.password),
+    username: decrypt(key.username),
+  }
+})
 ---
 
 <Dashboard pageTitle="Superuser Keys">
   <section
     slot="content"
     class="card bg-white w-full rounded-none py-12 px-12 shadow-sm"
+    x-data="{ selectedSuperUserKey: null, selectedSuperUserKeyId: null }"
   >
     <div class="flex justify-between items-center gap-4 flex-wrap">
       <h2 class="text-xl font-semibold">Superuser Keys</h2>
@@ -116,12 +126,11 @@ if (type === "all_types") {
         </label>
         <button
           class="btn btn-neutral rounded-none w-[140px]"
-          onclick="modal_superuser_create.showModal()"
+          @click="selectedSuperUserKey = null; selectedSuperUserKeyId = null; document.getElementById('modal_superuser').showModal()"
         >
           Create
         </button>
       </div>
-      <ModalSuperuserKeys dialogId="create" />
     </div>
     <div
       class="overflow-x-auto"
@@ -173,8 +182,8 @@ if (type === "all_types") {
           </thead>
           <tbody>
             {
-              superuserKeys.length > 0 &&
-                superuserKeys.map((key: any) => (
+              mappedSuper.length > 0 &&
+              mappedSuper.map((key: any) => (
                   <tr>
                     <td>
                       <input
@@ -202,19 +211,18 @@ if (type === "all_types") {
                         <button
                           class="cursor-pointer"
                           data-id={key.id}
-                          @click="document.getElementById('modal_superuser_' + $el.dataset.id).showModal()"
+                          data-key={JSON.stringify(key)}
+                          @click="selectedSuperUserKey = JSON.parse($el.dataset.key); selectedSuperUserKeyId = $el.dataset.id; document.getElementById('modal_superuser').showModal()"
                         >
                           <ICONS.edit class="fill-black" />
                         </button>
                         <button
                           class="cursor-pointer"
                           data-id={key.id}
-                          @click="document.getElementById('delete_modal_superkeys_' + $el.dataset.id).showModal()"
+                          @click="selectedSuperUserKeyId = $el.dataset.id; document.getElementById('delete_modal_superuser').showModal()"
                         >
                           <ICONS.delete class="fill-black" />
                         </button>
-                        <DeleteUserKeys id={key.id} />
-                        <ModalSuperuserKeys dialogId={key.id} />
                       </div>
                     </td>
                   </tr>
@@ -224,6 +232,8 @@ if (type === "all_types") {
         </table>
       </div>
     </div>
+    <DeleteUserKeys />
+    <ModalSuperuserKeys />
   </section>
 </Dashboard>
 <script is:inline>
