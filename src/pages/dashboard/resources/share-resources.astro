@@ -6,6 +6,8 @@ import getStringField from "../../../utils/field_cast";
 import calculateExpiryDate from "../../../utils/rotation_date";
 import { parseStringArray } from "../../../utils/helpers";
 import { createUser } from "../../../utils/share";
+import { sendMail } from "../../../utils/mailer"
+import Services from "../../../utils/services"
 
 const { id } = Astro.props;
 const { user } = Astro.locals;
@@ -31,14 +33,28 @@ if (Astro.request.method === "POST") {
   };
 
   const resource = await db.get("SELECT * FROM resources WHERE id = ?", [resourceId]);
+  const placeholders = share_to_array.map(() => '?').join(', ');
+  const query = `SELECT * FROM eligible_users WHERE id IN (${placeholders})`;
+  const shareToUsers = await db.all(query, share_to_array);
+
   const { username, password } = await createUser(resource, values.role);
 
   for (let i = 0; i < share_to_array.length; i++) {
-    const userId = share_to_array[i];
+    const userId = shareToUsers[i];
 
     await db.run(
       "INSERT INTO shares (resource_id, host, username, password, share_to, role, expired_at, next_rotation, rotation_period, shared_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [values.resourceId, resource.host, username, password, userId, values.role, values.expired_at, values.next_rotation, values.rotationPeriod, values.sharedBy]
+      [values.resourceId, resource.host, username, password, userId.email, values.role, values.expired_at, values.next_rotation, values.rotationPeriod, values.sharedBy]
+    );
+
+    await sendMail(user?.email, userId?.email , `You have received a resource on ${Services[resource.type as keyof typeof Services]} with the following details:`,
+      `You have received a resource on ${Services[resource.type as keyof typeof Services]} with the following details: <br>
+      <strong>Resource Name:</strong> ${Services[resource.type as keyof typeof Services]} <br>
+      <strong>Role:</strong> ${role} <br>
+      <strong>Expired At:</strong> ${values.expired_at} <br>
+      <strong>Next Rotation:</strong> ${values.next_rotation} <br>
+      <strong>Rotation Period:</strong> ${values.rotationPeriod} <br>
+      <strong>Shared By:</strong> ${user?.email}`
     );
   }
 
