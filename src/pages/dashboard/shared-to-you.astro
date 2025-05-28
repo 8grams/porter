@@ -11,56 +11,52 @@ const search = Astro.url.searchParams.get("search") || "";
 
 const { user } = Astro.locals;
 let shared = [];
+let filters = [];
+let query = "";
 
 if (type === "all_types") {
   if (search) {
-    shared = await db.all(
-      `SELECT
+    query = `SELECT
          r.*,
          s.expired_at, s.next_rotation, s.shared_by
        FROM shares s
               JOIN eligible_users eu ON s.share_to = eu.id
               JOIN resources r ON s.resource_id = r.id
-        WHERE eu.email = ? AND r.name LIKE ? `,
-      [user?.email, `%${search}%`],
-    );
+        WHERE eu.email = ? AND r.name LIKE ? `;
+    filters = [user?.email, `%${search}%`];
   } else {
-    shared = await db.all(
-      `SELECT
+    query = `SELECT
          r.*,
          s.expired_at, s.next_rotation, s.shared_by
        FROM shares s
               JOIN eligible_users eu ON s.share_to = eu.id
               JOIN resources r ON s.resource_id = r.id
-        WHERE eu.email = ?`,
-      [user?.email],
-    );
+        WHERE eu.email = ?`;
+    filters = [user?.email];
   }
 } else {
   if (search) {
-    shared = await db.all(
-      `SELECT
+    query = `SELECT
          r.*,
          s.expired_at, s.next_rotation, s.shared_by
        FROM shares s
               JOIN eligible_users eu ON s.share_to = eu.id
               JOIN resources r ON s.resource_id = r.id
-        WHERE eu.email = ? AND r.type = ? AND r.name LIKE ?`,
-      [user?.email, type, `%${search}%`],
-    );
+        WHERE eu.email = ? AND r.type = ? AND r.name LIKE ?`;
+    filters = [user?.email, type, `%${search}%`];
   } else {
-    shared = await db.all(
-      `SELECT
+    query = `SELECT
          r.*,
          s.expired_at, s.next_rotation, s.shared_by
        FROM shares s
               JOIN eligible_users eu ON s.share_to = eu.id
               JOIN resources r ON s.resource_id = r.id
-        WHERE eu.email = ? AND r.type = ?`,
-      [user?.email, type],
-    );
+        WHERE eu.email = ? AND r.type = ?`;
+    filters = [user?.email, type];
   }
 }
+
+shared = await db.all(query, filters);
 ---
 
 <Dashboard pageTitle="Resource">

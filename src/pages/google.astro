@@ -32,6 +32,7 @@ await db.run("UPDATE eligible_users SET name = ?, avatar = ? WHERE email = ?", [
   picture,
   email,
 ]);
+
 Astro?.session?.set("user", {
   email: eligibleUsers.email,
   role: "USER",

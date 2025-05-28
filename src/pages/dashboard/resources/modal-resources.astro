@@ -44,15 +44,15 @@ if (Astro.request.method === "POST") {
       query = "INSERT INTO resources (type, name, host, password, created_by) VALUES (?, ?, ?, ?, ?)";
     }
   } else if (type === "postgresql_access" || type === "mysql_access") {
+    values = [
+      type,
+      getStringField(formData, "name"),
+      getStringField(formData, "host"),
+      encrypt(getStringField(formData, "username")),
+      encrypt(getStringField(formData, "password")),
+      user?.email as string,
+    ];
     if (isUpdate) {
-      values = [
-        type,
-        getStringField(formData, "name"),
-        getStringField(formData, "host"),
-        encrypt(getStringField(formData, "username")),
-        encrypt(getStringField(formData, "password")),
-        user?.email as string,
-      ];
       query = "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
       values.push(id);
     } else {
@@ -317,6 +317,23 @@ if (Astro.request.method === "POST") {
       <button type="submit" class="btn btn-neutral rounded-none w-full">
         Save
       </button>
+      <template x-if="category_name === 'postgresql_access' || category_name === 'mysql_access'">
+        <div class="flex flex-col gap-2">
+          <button 
+            type="button" 
+            class="btn btn-outline rounded-none w-full"
+            @click="checkConnection()"
+          >
+            Test Connection
+          </button>
+          <div 
+            x-show="connectionResult" 
+            x-text="connectionResult?.message || ''"
+            :class="connectionResult?.success ? 'text-success' : 'text-error'"
+            class="text-sm p-2 rounded"
+          ></div>
+        </div>
+      </template>
     </Forms>
   </div>
 </dialog>
@@ -324,6 +341,7 @@ if (Astro.request.method === "POST") {
   function formHandler() {
     return {
       category_name: '',
+      connectionResult: null,
       titles: {
         aws_iam: "AWS IAM",
         google_iam: "Google IAM",
@@ -337,6 +355,36 @@ if (Astro.request.method === "POST") {
           this.category_name = selectedResource?.type;
         } else {
           this.category_name = '';
+        }
+      },
+      async checkConnection() {
+        const host = document.querySelector('input[name="host"]').value;
+        const username = document.querySelector('input[name="username"]').value;
+        const password = document.querySelector('input[name="password"]').value;
+        
+        if (!host || !username || !password) {
+          this.connectionResult = {
+            success: false,
+            message: 'Please fill in all required fields'
+          };
+          return;
+        }
+
+        try {
+          const type = this.category_name === 'postgresql_access' ? 'postgres' : 'mysql';
+          const response = await fetch('/api/test-connection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, host, username, password })
+          });
+          
+          const result = await response.json();
+          this.connectionResult = result;
+        } catch (error) {
+          this.connectionResult = {
+            success: false,
+            message: 'Failed to test connection: ' + error.message
+          };
         }
       }
     };

@@ -10,11 +10,11 @@ const execAsync = promisify(exec);
 
 export async function createViewerPgUser(resource) {
   // create new PG user with password
-  const username = createRandomUsername(`pg_viewer_${resource.id}`);
+  const username = createRandomUsername(`porter_pg_viewer_${resource.id}`);
   const password = createRandomPassword();
   
   const psql = `
-    PGPASSWORD=${decrypt(resource.password)} psql -h ${resource.host} -U ${resource.username} -d postgres \ 
+    PGPASSWORD=${decrypt(resource.password)} psql -h ${resource.host} -U ${decrypt(resource.username)} -d postgres \ 
     -c "CREATE USER ${username} WITH PASSWORD '${password}'; \
     GRANT CONNECT ON DATABASE postgres TO ${username}; \
     GRANT USAGE ON SCHEMA public TO ${username}; \
@@ -32,18 +32,18 @@ export async function createViewerPgUser(resource) {
 
 export async function createEditorPgUser(resource) {
   // create new PG user with password
-  const username = createRandomUsername(`pg_editor_${resource.id}`);
+  const username = createRandomUsername(`porter_pg_editor_${resource.id}`);
   const password = createRandomPassword();
   
-  const psql = `
-    PGPASSWORD=${decrypt(resource.password)} psql -h ${resource.host} -U ${resource.username} -d postgres \ 
-    -c "CREATE USER ${username} WITH PASSWORD '${password}'; \
-    GRANT CONNECT ON DATABASE postgres TO ${username}; \
-    GRANT USAGE ON SCHEMA public TO ${username}; \
-    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${username}; \
+  const sqlCommand = `
+    CREATE USER ${username} WITH PASSWORD '${password}';
+    GRANT CONNECT ON DATABASE postgres TO ${username};
+    GRANT USAGE ON SCHEMA public TO ${username};
+    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ${username};
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ${username};
   `;
 
+  const psql = `PGPASSWORD='${decrypt(resource.password)}' psql -h ${resource.host} -U ${decrypt(resource.username)} -d postgres -c "${sqlCommand.replace(/\n/g, ' ')}"`;
   try {
     await execAsync(psql);
     return { username, password };
@@ -54,18 +54,19 @@ export async function createEditorPgUser(resource) {
 
 export async function createAdminPgUser(resource) {
   // create new PG superuser with password
-  const username = createRandomUsername(`pg_superuser_${resource.id}`);
+  const username = createRandomUsername(`porter_pg_superuser_${resource.id}`);
   const password = createRandomPassword();
   
-  const psql = `
-    PGPASSWORD=${resource.password} psql -h ${resource.host} -U ${resource.username} -d postgres \ 
-    -c "CREATE USER ${username} WITH PASSWORD '${password}' SUPERUSER; \
+  const sqlCommand = `
+    CREATE USER ${username} WITH PASSWORD '${password}' SUPERUSER; \
     GRANT ALL PRIVILEGES ON DATABASE postgres TO ${username}; \
     GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${username}; \
     GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ${username}; \
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${username}; \
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO ${username};
   `;
+
+  const psql = `PGPASSWORD='${decrypt(resource.password)}' psql -h ${resource.host} -U ${decrypt(resource.username)} -d postgres -c "${sqlCommand.replace(/\n/g, ' ')}"`;
 
   try {
     await execAsync(psql);
@@ -77,13 +78,14 @@ export async function createAdminPgUser(resource) {
 
 export async function deletePostgresqlUser(resource, username) {
   // SQL command to drop the user
-  const psql = `
-    PGPASSWORD=${decrypt(resource.password)} psql -h ${resource.host} -U ${resource.username} -d postgres \
-    -c "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM ${username}; \
+  const sqlCommand = `
+    REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM ${username}; \
     REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM ${username}; \
     REVOKE ALL PRIVILEGES ON DATABASE postgres FROM ${username}; \
     DROP USER IF EXISTS ${username};"
   `;
+
+  const psql = `PGPASSWORD='${decrypt(resource.password)}' psql -h ${resource.host} -U ${decrypt(resource.username)} -d postgres -c "${sqlCommand.replace(/\n/g, ' ')}"`;
 
   try {
     await execAsync(psql);
@@ -98,12 +100,13 @@ export async function createViewerMysqlUser(resource) {
   const username = createRandomUsername(`mysql_viewer_${resource.id}`);
   const password = createRandomPassword();
   
-  const mysql = `
-    mysql -h ${resource.host} -u ${resource.username} -p${resource.password} \
-    -e "CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
+  const sqlCommand = `
+    CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
     GRANT SELECT ON ${resource.database}.* TO '${username}'@'%'; \
-    FLUSH PRIVILEGES;"
+    FLUSH PRIVILEGES;
   `;
+
+  const mysql = `mysql -h ${resource.host} -u ${decrypt(resource.username)} -p${decrypt(resource.password)} -c "${sqlCommand.replace(/\n/g, ' ')}"`;
 
   try {
     await execAsync(mysql);
@@ -117,12 +120,13 @@ export async function createEditorMysqlUser(resource) {
   const username = createRandomUsername(`mysql_editor_${resource.id}`);
   const password = createRandomPassword();
   
-  const mysql = `
-    mysql -h ${resource.host} -u ${resource.username} -p${resource.password} \
-    -e "CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
+  const sqlCommand = `
+    CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
     GRANT SELECT, INSERT, UPDATE, DELETE ON ${resource.database}.* TO '${username}'@'%'; \
-    FLUSH PRIVILEGES;"
+    FLUSH PRIVILEGES;
   `;
+
+  const mysql = `mysql -h ${resource.host} -u ${decrypt(resource.username)} -p${decrypt(resource.password)} -c "${sqlCommand.replace(/\n/g, ' ')}"`;
 
   try {
     await execAsync(mysql);
@@ -136,12 +140,13 @@ export async function createSuperuserMysqlUser(resource) {
   const username = createRandomUsername(`superuser_${resource.id}`);
   const password = createRandomPassword();
   
-  const mysql = `
-    mysql -h ${resource.host} -u ${resource.username} -p${resource.password} \
-    -e "CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
+  const sqlCommand = `
+    CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
     GRANT ALL PRIVILEGES ON ${resource.database}.* TO '${username}'@'%' WITH GRANT OPTION; \
-    FLUSH PRIVILEGES;"
+    FLUSH PRIVILEGES;
   `;
+
+  const mysql = `mysql -h ${resource.host} -u ${decrypt(resource.username)} -p${decrypt(resource.password)} -c "${sqlCommand.replace(/\n/g, ' ')}"`;
 
   try {
     await execAsync(mysql);
@@ -152,10 +157,11 @@ export async function createSuperuserMysqlUser(resource) {
 }
 
 export async function deleteMysqlUser(resource, username) {
-  const mysql = `
-    mysql -h ${resource.host} -u ${resource.username} -p${resource.password} \
-    -e "DROP USER IF EXISTS '${username}'@'%';"
+  const sqlCommand = `
+    DROP USER IF EXISTS '${username}'@'%';
   `;
+
+  const mysql = `mysql -h ${resource.host} -u ${decrypt(resource.username)} -p${decrypt(resource.password)} -c "${sqlCommand.replace(/\n/g, ' ')}"`;
 
   try {
     await execAsync(mysql);

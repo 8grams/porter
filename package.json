@@ -14,8 +14,10 @@
     "@tailwindcss/vite": "^4.1.4",
     "astro": "^5.7.7",
     "dotenv": "^16.5.0",
+    "mysql2": "^3.14.1",
     "node-ssh": "^13.2.1",
     "nodemailer": "^7.0.3",
+    "pg": "^8.16.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "tailwindcss": "^4.1.4"
