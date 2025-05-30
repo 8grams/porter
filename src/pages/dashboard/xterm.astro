@@ -1,0 +1,142 @@
+<dialog id="xterm-modal" class="modal" slot="dialog">
+  <div class="modal-box">
+    <div x-data="xtermApp">
+      <h2 class="text-xl font-semibold mb-2">Console</h2>
+      <div
+        id="xterm"
+        class="w-full bg-black text-white rounded"
+        style="font-family: monospace;"
+      >
+      </div>
+    </div>
+  </div>
+</dialog>
+<script is:inline>
+  const script = document.createElement("script");
+  script.src = "https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.min.js";
+  script.onload = () => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://cdn.jsdelivr.net/npm/xterm/css/xterm.css";
+    document.head.appendChild(link);
+    const styleTag = document.createElement("style");
+    styleTag.textContent = `
+      .xterm {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+      }
+      .xterm-viewport {
+        overflow-y: auto !important;
+      }
+    `;
+    document.head.appendChild(styleTag);
+
+    document.addEventListener("alpine:init", () => {
+      Alpine.data("xtermApp", () => ({
+        term: null,
+        editMode: false,
+        buffer: [],
+        prompt: "> ",
+        inputBuffer: "",
+        init() {
+          this.term = new Terminal({
+            cursorBlink: true,
+            fontFamily: "monospace",
+            fontSize: 14,
+            lineHeight: 1.2,
+            theme: {
+              background: "#000000",
+              foreground: "#ffffff",
+            },
+            convertEol: true,
+            scrollback: 1000,
+            wordWrap: true,
+          });
+
+          const container = document.getElementById("xterm");
+          this.term.open(container);
+
+          const style = getComputedStyle(container);
+          const width = parseInt(style.width);
+          const height = parseInt(style.height);
+          const charWidth = 9;
+          const charHeight = 18;
+
+          const cols = Math.floor(width / charWidth);
+          const rows = Math.floor(height / charHeight);
+          this.term.resize(cols, rows);
+
+          this.term.writeln("Welcome to Ansible Terminal!");
+          this.term.writeln("Click Edit to start editing your playbook.");
+          this.promptInput();
+
+          // Event handler input
+          this.term.onKey((e) => {
+            if (!this.editMode) return;
+            const ev = e.domEvent;
+            const printable = !ev.altKey && !ev.ctrlKey && !ev.metaKey;
+            if (ev.key === "Enter") {
+              this.buffer.push(this.inputBuffer);
+              this.inputBuffer = "";
+              this.promptInput();
+            } else if (ev.key === "Backspace") {
+              if (this.inputBuffer.length > 0) {
+                this.inputBuffer = this.inputBuffer.slice(0, -1);
+                this.term.write("\b \b");
+              }
+            } else if (printable) {
+              this.inputBuffer += e.key;
+              this.term.write(e.key);
+            }
+          });
+        },
+        promptInput() {
+          this.term.write("\r\n" + this.prompt);
+          this.inputBuffer = "";
+          this.term.focus();
+        },
+        runPlaybook() {
+          this.term.writeln("\r\n$ ansible-playbook playbook.yml");
+          setTimeout(() => {
+            this.term.writeln("[SUCCESS] All tasks completed.");
+          }, 1000);
+        },
+        checkPlaybook() {
+          this.term.writeln("\r\n$ ansible-playbook playbook.yml --check");
+          setTimeout(() => {
+            this.term.writeln(
+              "[CHECK MODE] Tasks would have run successfully.",
+            );
+          }, 1000);
+        },
+        toggleEdit() {
+          this.editMode = !this.editMode;
+          if (this.editMode) {
+            this.term.writeln("\r\n-- Edit Mode Enabled --");
+            this.term.writeln(
+              "Type your playbook YAML lines. Press Enter after each line.",
+            );
+            if (this.buffer.length > 0) {
+              this.term.writeln("\r\n[Previous Edit]");
+              this.buffer.forEach((line) => {
+                this.term.writeln(this.prompt + line); // > line
+              });
+            }
+            this.inputBuffer = "";
+            this.term.write(this.prompt); // >
+          } else {
+            if (this.inputBuffer.trim() !== "") {
+              this.buffer.push(this.inputBuffer);
+              this.inputBuffer = "";
+            }
+            this.term.writeln("\r\n-- Edit Mode Disabled --");
+            this.term.writeln("\r\n[SAVED] Playbook updated:\r\n");
+            this.term.writeln(this.buffer.join("\n"));
+          }
+        },
+      }));
+    });
+  };
+  document.head.appendChild(script);
+</script>

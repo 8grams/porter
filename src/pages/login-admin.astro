@@ -1,6 +1,7 @@
 ---
 import Forms from "../components/Forms.astro";
 import Layout from "../layouts/Layout.astro";
+import Porter from "../components/Porter.astro";
 
 const url = new URL(Astro.request.url);
 const showError = url.searchParams.get("error") === "1";
@@ -29,7 +30,10 @@ if (Astro.request.method === "POST") {
     <div class="toast toast-top toast-end" id="toast-container"></div>
     <div class="card w-full max-w-md shadow-xl bg-base-100">
       <div class="card-body flex flex-col gap-6">
-        <h2 class="card-title justify-center">Porter</h2>
+        <div class="flex justify-center gap-4 items-center">
+          <Porter />
+          <h2 class="card-title justify-center">Porter</h2>
+        </div>
         {
           showError && (
             <div class="alert alert-error alert-soft mb-4 rounded-none">

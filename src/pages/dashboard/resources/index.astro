@@ -14,7 +14,6 @@ const db = await openDB();
 
 const type = Astro.url.searchParams.get("type") || "";
 const search = Astro.url.searchParams.get("search") || "";
-const reload = Astro.url.searchParams.get("reload") || "";
 
 let resources = [];
 if (type === "all_types") {
@@ -276,14 +275,13 @@ const mappedResource = resources.map((r: any) => {
                       <div class="flex items-center justify-between gap-4">
                         <p class="text-gray-700">Shared to</p>
                         <a
-                            class="cursor-pointer flex items-center justify-end"
-                            data-id={resource.id}
-                            href="#"
-                            @click.prevent="resourceId = $el.dataset.id; document.getElementById('shared_to').showModal(); const p=new URLSearchParams(window.location.search); p.delete('resourceId'); p.append('resourceId', resourceId); history.pushState({}, '', window.location.pathname + '?' + p.toString())"
+                          class="cursor-pointer flex items-center justify-end"
+                          data-id={resource.id}
+                          href="#"
+                          @click.prevent="resourceId = $el.dataset.id; document.getElementById('shared_to').showModal(); const p=new URLSearchParams(window.location.search); p.delete('resourceId'); p.append('resourceId', resourceId); history.pushState({}, '', window.location.pathname + '?' + p.toString())"
                         >
                           <ICONS.users class="fill-black w-5 h-5" />
                         </a>
-
                       </div>
                     </div>
                   </div>

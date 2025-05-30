@@ -14,6 +14,7 @@ import eye from "../assets/icons/eye.svg";
 import eyeclose from "../assets/icons/eye-close.svg";
 import usersvg from "../assets/icons/users.svg";
 import download from "../assets/icons/download.svg";
+import copy from "../assets/icons/content-copy.svg"
 
 export const ICONS = {
   terminal: Terminal,
@@ -26,6 +27,7 @@ export const ICONS = {
   eyeclose: eyeclose,
   users: usersvg,
   download: download,
+  copy: copy
 };
 
 export const ServicesIcons = {

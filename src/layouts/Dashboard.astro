@@ -118,11 +118,11 @@ const { user } = Astro.locals;
             @click.outside="open = false"
             x-cloak
           >
+            <Forms method="POST" action="/logout">
             <li>
-              <Forms method="POST" action="/logout">
                 <button type="submit">Logout</button>
-              </Forms>
             </li>
+          </Forms>
           </ul>
         </div>
     </div>

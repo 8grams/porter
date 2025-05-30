@@ -33,18 +33,6 @@ export async function processExpiredShares() {
       [currentDate],
     );
 
-    const html = `
-      Hello,<br><br>
-      The access you received to the resource below has expired:<br><br>
-      <strong>Resource Type:</strong> ${resource.type} <br>
-      <strong>Host:</strong> ${resource.host || "-"} <br>
-      <strong>Username:</strong> ${share.username} <br>
-      <strong>Expired At:</strong> ${share.expired_at} <br>
-      <strong>Rotation Period:</strong> ${share.rotation_period} <br><br>
-      If you need renewed access, please request it again.<br><br>
-      Regards,<br>Your Team
-    `;
-
     console.log(`Found ${expiredShares.length} expired shares to process`);
 
     // Process each expired share
@@ -55,10 +43,18 @@ export async function processExpiredShares() {
         ]);
         await revokeAccess(resource, share);
         await sendMail(
-          env.ADMIN_USERNAME,
+          "noreply@porter.com",
           share.email,
           "Your Access Has Expired",
-          html,
+          "exp",
+          {
+            subject: "Resource has been expired",
+            type: resource.type,
+            host: resource.host,
+            username: share.username,
+            expired_at: share.expired_at,
+            rotation_period: share.rotation_period
+          }
         );
         console.log(`Successfully processed expired share ID: ${share.id}`);
       } catch (error) {
@@ -103,18 +99,6 @@ export async function processRotationSchedule() {
 
     console.log(`Found ${sharesToRotate.length} shares to rotate`);
 
-    const html = `
-          Hello,<br><br>
-          Your access to the shared resource has been rotated. Here are your new credentials:<br><br>
-          <strong>Resource Type:</strong> ${resource.type} <br>
-          <strong>Host:</strong> ${resource.host || "-"} <br>
-          <strong>Username:</strong> ${username} <br>
-          <strong>Password:</strong> ${password} <br>
-          <strong>Next Rotation:</strong> ${nextRotation} <br><br>
-          Please keep these credentials secure.<br><br>
-          Regards,<br>Your Team
-        `;
-
     // Process each share that needs rotation
     for (const share of sharesToRotate) {
       try {
@@ -145,10 +129,18 @@ export async function processRotationSchedule() {
 
         // send email notification
         await sendMail(
-          env.ADMIN_USERNAME,
+          "noreply@porter.com",
           share.email,
           "Your Shared Resource Has Been Rotated",
-          html,
+          "rt",
+          {
+            subject: "Resource has been rotated",
+            type: resource.type,
+            host: resource.host,
+            username,
+            password,
+            nextRotation
+          }
         );
 
         console.log(`Successfully rotated share ID: ${share.id}`);

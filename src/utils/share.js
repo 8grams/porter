@@ -102,7 +102,7 @@ export async function createViewerMysqlUser(resource) {
   
   const sqlCommand = `
     CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
-    GRANT SELECT ON ${resource.database}.* TO '${username}'@'%'; \
+    GRANT SELECT ON *.* TO '${username}'@'%'; \
     FLUSH PRIVILEGES;
   `;
 
@@ -122,7 +122,7 @@ export async function createEditorMysqlUser(resource) {
   
   const sqlCommand = `
     CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
-    GRANT SELECT, INSERT, UPDATE, DELETE ON ${resource.database}.* TO '${username}'@'%'; \
+    GRANT SELECT, INSERT, UPDATE, DELETE ON *.* TO '${username}'@'%'; \
     FLUSH PRIVILEGES;
   `;
 
@@ -139,10 +139,9 @@ export async function createEditorMysqlUser(resource) {
 export async function createSuperuserMysqlUser(resource) {
   const username = createRandomUsername(`superuser_${resource.id}`);
   const password = createRandomPassword();
-  
   const sqlCommand = `
     CREATE USER '${username}'@'%' IDENTIFIED BY '${password}'; \
-    GRANT ALL PRIVILEGES ON ${resource.database}.* TO '${username}'@'%' WITH GRANT OPTION; \
+    GRANT ALL PRIVILEGES ON *.* TO '${username}'@'%' WITH GRANT OPTION; \
     FLUSH PRIVILEGES;
   `;
 
@@ -667,6 +666,7 @@ users:
 }
 
 export function createUser(resource, role) {
+  console.log({resource, role})
   switch (resource.type) {
     case "postgresql_access":
       if (role == "viewer") {
