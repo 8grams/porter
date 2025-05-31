@@ -1,4 +1,4 @@
-import { testMysqlConnection } from '../../../utils/db_connection';
+import { testMysqlConnection } from '../../utils/db_connection';
 
 export async function POST({ request }) {
   try {

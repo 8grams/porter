@@ -1,4 +1,4 @@
-import { testPostgresConnection } from '../../../utils/db_connection';
+import { testPostgresConnection } from '../../utils/db_connection';
 
 export async function POST({ request }) {
   try {
