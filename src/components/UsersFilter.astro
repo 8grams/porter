@@ -105,12 +105,20 @@ const { eligibleUsers } = Astro.props;
         >
           <div class="flex items-center gap-3 py-3 px-4">
             <div class="flex-shrink-0">
-              <img
-                :src="option.avatar"
-                :alt="option.name"
-                class="w-8 h-8 rounded-full object-cover"
-                onerror="this.onerror=null; this.src='data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2232%22%20height%3D%2232%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2216%22%20fill%3D%22%23cbd5e1%22%2F%3E%3Ctext%20x%3D%2216%22%20y%3D%2220%22%20font-size%3D%2212%22%20text-anchor%3D%22middle%22%20fill%3D%22%236b7280%22%3E' + option.name.charAt(0).toUpperCase() + '%3C%2Ftext%3E%3C%2Fsvg%3E';"
-              />
+              <template x-if="option.avatar">
+                <img
+                  :src="option.avatar"
+                  :alt="option.name"
+                  class="w-8 h-8 rounded-full object-cover"
+                />
+              </template>
+              <template x-if="!option.avatar">
+                <div
+                  class="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-medium uppercase"
+                  x-text="option.name ? option.name.charAt(0) : option.email.charAt(0)"
+                >
+                </div>
+              </template>
             </div>
             <div class="flex-grow">
               <div class="font-medium" x-text="option.name"></div>
@@ -214,8 +222,8 @@ const { eligibleUsers } = Astro.props;
           const searchLower = this.search.toLowerCase();
           this.filteredOptions = this.options.filter(
             (user) =>
-              user.name.toLowerCase().includes(searchLower) ||
-              user.email.toLowerCase().includes(searchLower),
+              (user.name?.toLowerCase() || "").includes(searchLower) ||
+              (user.email?.toLowerCase() || "").includes(searchLower),
           );
         }
         this.highlightedIndex = 0;
