@@ -53,8 +53,8 @@ export async function processExpiredShares() {
             host: resource.host,
             username: share.username,
             expired_at: share.expired_at,
-            rotation_period: share.rotation_period
-          }
+            rotation_period: share.rotation_period,
+          },
         );
         console.log(`Successfully processed expired share ID: ${share.id}`);
       } catch (error) {
@@ -139,8 +139,8 @@ export async function processRotationSchedule() {
             host: resource.host,
             username,
             password,
-            nextRotation
-          }
+            nextRotation,
+          },
         );
 
         console.log(`Successfully rotated share ID: ${share.id}`);

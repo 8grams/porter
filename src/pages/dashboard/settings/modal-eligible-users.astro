@@ -1,6 +1,7 @@
 ---
 import Forms from "../../../components/Forms.astro";
 import { openDB } from "../../../utils/db";
+import formValidation from "../../../utils/formValidation";
 
 const db = await openDB();
 
@@ -8,6 +9,19 @@ if (Astro.request.method === "POST") {
   const formData = await Astro.request.formData();
   const userId = formData.get("id");
   const email = formData.get("email");
+
+  const errors: Record<string, string> = {};
+
+  if (formValidation.notEmpty(email) || formValidation.emailValidation(email)) {
+    errors.email = "Email tidak valid";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return new Response(JSON.stringify({ success: false, errors }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   if (userId) {
     await db.run("UPDATE eligible_users SET email = ? WHERE id = ?", [
@@ -17,17 +31,21 @@ if (Astro.request.method === "POST") {
   } else {
     await db.run("INSERT INTO eligible_users (email) VALUES (?)", [email]);
   }
-  return Astro.redirect("/dashboard/settings/eligible-users");
+  return new Response(
+    JSON.stringify({
+      success: true,
+      redirect: "/dashboard/settings/eligible-users",
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
 ---
 
 <dialog class="modal" id="modal_eligible">
   <div class="modal-box">
-    <form method="dialog">
-      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        >✕</button
-      >
-    </form>
     <Forms
       class="flex flex-col gap-6"
       action="/dashboard/settings/modal-eligible-users"
@@ -51,9 +69,55 @@ if (Astro.request.method === "POST") {
           :value="selectedUser?.email"
         />
       </div>
-      <button class="btn btn-neutral w-full rounded-none" type="submit"
-        >Save</button
-      >
+      <div class="flex gap-4">
+        <button
+          class="btn btn-neutral btn-outline flex-1 rounded-none"
+          type="reset"
+          id="cancelAction">Cancel</button
+        >
+        <button class="btn btn-neutral flex-1 rounded-none" type="submit"
+          >Save</button
+        >
+      </div>
     </Forms>
   </div>
 </dialog>
+<script is:inline>
+  const form = document.querySelector("#modal_eligible form");
+  const cancelButton = document.getElementById("cancelAction");
+
+  cancelButton.addEventListener("click", () => {
+    window.formUtils.clearErrors(form);
+    document.getElementById("modal_eligible")?.close();
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    window.formUtils.clearErrors(form);
+
+    const data = new FormData(form);
+
+    try {
+      const res = await fetch(form.action, {
+        method: "POST",
+        body: data,
+      });
+      const result = await res.json();
+
+      if (!res.ok) {
+        if (result.errors) {
+          for (const [field, msg] of Object.entries(result.errors)) {
+            window.formUtils.showError(form, field, msg);
+          }
+        } else {
+          alert("Terjadi kesalahan");
+        }
+      } else if (result.success) {
+        window.location.href = result.redirect;
+      }
+    } catch (err) {
+      alert("Error jaringan, coba lagi");
+    }
+  });
+</script>

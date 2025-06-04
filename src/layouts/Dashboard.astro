@@ -134,3 +134,42 @@ const { user } = Astro.locals;
 </Layout>
 <slot name="dialog" />
 <slot name="script" />
+<script is:inline>
+  window.formUtils = {
+    clearErrors(form) {
+      form.querySelectorAll(".form-error").forEach((el) => el.remove());
+      document.querySelectorAll('[id^="errors_"]').forEach((container) => {
+        container.textContent = "";
+      });
+    },
+    showError(form, inputName, msg) {
+      const inputs = form.querySelectorAll(`[name="${inputName}"]`);
+      if (!inputs.length) return;
+      inputs.forEach((input) => {
+        const next = input.nextElementSibling;
+        if (next?.classList.contains("form-error")) {
+          next.remove();
+        }
+      });
+      if (inputName.includes("[]")) {
+        const containerId = "errors_" + inputName.replace(/\[\]/g, "");
+        const container = document.getElementById(containerId);
+        if (container) {
+          container.textContent = msg;
+        } else {
+          const errorEl = document.createElement("p");
+          errorEl.className = "form-error text-sm text-red-600";
+          errorEl.textContent = msg;
+          inputs[0].insertAdjacentElement("afterend", errorEl);
+        }
+      } else {
+        inputs.forEach((input) => {
+          const errorEl = document.createElement("p");
+          errorEl.className = "form-error text-sm text-red-600";
+          errorEl.textContent = msg;
+          input.insertAdjacentElement("afterend", errorEl);
+        });
+      }
+    }
+  }
+</script>
