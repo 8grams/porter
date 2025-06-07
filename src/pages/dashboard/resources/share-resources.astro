@@ -8,6 +8,7 @@ import { parseStringArray } from "../../../utils/helpers";
 import { createUser } from "../../../utils/share";
 import { sendMail } from "../../../utils/mailer";
 import Services from "../../../utils/services";
+import formValidate from "../../../utils/formValidation";
 
 const { id } = Astro.props;
 const { user } = Astro.locals;
@@ -22,6 +23,35 @@ if (Astro.request.method === "POST") {
   const next_rotation = calculateExpiryDate(rotationPeriod, expired_at);
   const share_to = getStringField(formData, "share_to");
   const share_to_array = parseStringArray(share_to);
+
+  const errors: Record<string, string> = {};
+
+  if (
+    formValidate.customValidation(share_to_array, (arr: []) =>
+      arr.length === 0 ? "invalid" : ""
+    )
+  ) {
+    errors.share_to = "Share To tidak boleh kosong";
+  }
+
+  if (formValidate.notEmpty(role)) {
+    errors.role = "Role tidak boleh kosong";
+  }
+
+  if (formValidate.notEmpty(rotationPeriod)) {
+    errors.rotation_period = "Rotation Period tidak boleh kosong";
+  }
+
+  if (formValidate.notEmpty(expired_at)) {
+    errors.expired_at = "Expired At tidak boleh kosong";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return new Response(JSON.stringify({ success: false, errors }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   const values = {
     resourceId,
@@ -57,7 +87,7 @@ if (Astro.request.method === "POST") {
         values.next_rotation,
         values.rotationPeriod,
         values.sharedBy,
-      ],
+      ]
     );
 
     const resourceName = Services[resource.type as keyof typeof Services];
@@ -76,11 +106,19 @@ if (Astro.request.method === "POST") {
         rotationPeriod,
         email: user?.email,
         year: new Date().getFullYear(),
-      },
+      }
     );
   }
-
-  return Astro.redirect("/dashboard/resources");
+  return new Response(
+    JSON.stringify({
+      success: true,
+      redirect: "/dashboard/resources",
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
 
 const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
@@ -88,11 +126,6 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
 
 <dialog slot="dialog" class="modal" id="share_resource">
   <div class="modal-box">
-    <form method="dialog">
-      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        >✕</button
-      >
-    </form>
     <Forms
       class="flex flex-col gap-6"
       method="POST"
@@ -106,6 +139,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
           <select
             class="select select-bordered w-full rounded-none disabled:text-gray-300"
             name="role"
+            required
           >
             <option value="" selected disabled>Select permission</option>
             <option value="viewer">Viewer</option>
@@ -164,6 +198,7 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
           <select
             class="select select-bordered w-full rounded-none"
             name="rotation_period"
+            required
           >
             <option value="" selected disabled>Choose Rotation Period</option>
             <option value="1_week">1 Week</option>
@@ -182,3 +217,33 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
   </div>
 </dialog>
 <script type="module" src="https://unpkg.com/cally"></script>
+<script is:inline>
+  const form = document.querySelector("#share_resource form");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    window.formUtils.clearErrors(form);
+    const data = new FormData(form);
+
+    try {
+      const res = await fetch(form.action, {
+        method: "POST",
+        body: data,
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        if (result.errors) {
+          for (const [field, msg] of Object.entries(result.errors)) {
+            window.formUtils.showError(form, field, msg);
+          }
+        } else {
+          alert("Terjadi kesalahan");
+        }
+      } else if (result.success) {
+        window.location.href = result.redirect;
+      }
+    } catch (error) {
+      alert("Error jaringan, coba lagi");
+    }
+  });
+</script>

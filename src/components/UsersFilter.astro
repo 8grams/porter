@@ -17,7 +17,20 @@ const { eligibleUsers } = Astro.props;
           <div
             class="bg-gray-200 rounded-md px-2 py-0.5 flex items-center gap-1 text-sm"
           >
-            <img :src="item.avatar" class="h-4 w-4 rounded-full mr-1" />
+            <template x-if="item.avatar">
+              <img
+                :src="item.avatar"
+                :alt="item.name"
+                class="w-4 h-4 rounded-full object-cover"
+              />
+            </template>
+            <template x-if="!item.avatar">
+              <div
+                class="w-4 h-4 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-medium uppercase"
+                x-text="item.name ? item.name.charAt(0) : item.email.charAt(0)"
+              >
+              </div>
+            </template>
             <span x-text="item.name || item.email"></span>
             <button
               type="button"
@@ -38,12 +51,12 @@ const { eligibleUsers } = Astro.props;
           Share to
         </div>
       </div>
-      <input
-        type="hidden"
-        name="share_to"
-        :value="JSON.stringify(selectedItems.map(item => item.id))"
-      />
     </div>
+    <input
+      type="hidden"
+      name="share_to"
+      :value="JSON.stringify(selectedItems.map(item => item.id))"
+    />
   </div>
   <div
     x-cloak
@@ -223,7 +236,7 @@ const { eligibleUsers } = Astro.props;
           this.filteredOptions = this.options.filter(
             (user) =>
               (user.name?.toLowerCase() || "").includes(searchLower) ||
-              (user.email?.toLowerCase() || "").includes(searchLower),
+              (user.email?.toLowerCase() || "").includes(searchLower)
           );
         }
         this.highlightedIndex = 0;
@@ -235,7 +248,7 @@ const { eligibleUsers } = Astro.props;
 
       toggleSelect(item) {
         const index = this.selectedItems.findIndex(
-          (selected) => selected.id === item.id,
+          (selected) => selected.id === item.id
         );
 
         if (index !== -1) {
