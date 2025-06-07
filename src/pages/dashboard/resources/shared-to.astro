@@ -4,8 +4,6 @@ import { ICONS } from "../../../constants";
 import Forms from "../../../components/Forms.astro";
 import getStringField from "../../../utils/field_cast";
 
-const resourceId = Astro.url.searchParams.get("resourceId")
-
 const db = await openDB();
 
 if (Astro.request.method === "POST") {
@@ -14,18 +12,6 @@ if (Astro.request.method === "POST") {
   await db.run("DELETE FROM shares WHERE id = ?", [id]);
   return Astro.redirect("/dashboard/resources");
 }
-
-const sharedTo = await db.all(
-  `
-  SELECT 
-  shares.*, 
-  eligible_users.email
-FROM 
-  shares
-JOIN 
-  eligible_users ON shares.share_to = eligible_users.id WHERE shares.resource_id = ?`,
-  [resourceId],
-);
 ---
 
 <dialog id="shared_to" class="modal">
@@ -38,84 +24,49 @@ JOIN
     <div
       class="overflow-x-auto"
       x-data="{
-        selected: [],
-        toggle(id) {
-          if (this.selected.includes(id)) {
-            this.selected = this.selected.filter(i => i !== id);
-          } else {
-            this.selected.push(id);
-          }
-        },
-        isAllSelected() {
-          let inputs = document.querySelectorAll(`input[name='resource_id']`);
-          return inputs.length && this.selected.length === inputs.length;
-        },
-        toggleAll() {
-          let inputs = document.querySelectorAll(`input[name='resource_id']`);
-          if (this.isAllSelected()) {
-            this.selected = [];
-          } else {
-            let newSelect = []
-            inputs.forEach(i=>{
-              newSelect.push(i.value)
-            })
-            this.selected = newSelect;
-          }
+        sharedTo: [],
+        async fetchSharedTo(rid) {
+          if(!rid) return;
+          const res = await fetch(`/api/shared-to?resourceId=${rid}`, {
+            method: 'GET'
+          })
+          const result = await res.json()
+          this.sharedTo = result.sharedTo
         }
       }"
+      x-effect="fetchSharedTo(selectedResourceId)"
     >
       <table class="table">
         <thead>
           <tr>
-            <th>
-              <input
-                type="checkbox"
-                class="checkbox"
-                :checked="isAllSelected()"
-                @change="toggleAll"
-                x-effect="$el.indeterminate = !isAllSelected() && selected.length"
-              />
-            </th>
             <th class="text-black">Shared to</th>
             <th class="text-black">Permission</th>
             <th class="text-black">Expired At</th>
             <th class="text-black">Next Rotation</th>
-            <th></th>
+            <th class="text-black">Action</th>
           </tr>
         </thead>
         <tbody>
-          {
-            sharedTo.map((item: { id: string; email: string; role: string; expired_at: string; next_rotation: string }) => (
-              <tr>
-                <td>
-                  <input
-                    type="checkbox"
-                    class="checkbox"
-                    name="resource_id"
-                    value={item.id}
-                    x-bind:checked="selected.includes($el.value)"
-                    @change={`()=>toggle("${item.id}")`}
-                  />
-                </td>
-                <td>{item.email}</td>
-                <td>{item.role}</td>
-                <td>{item.expired_at}</td>
-                <td>{item.next_rotation}</td>
-                <td>
-                  <Forms
-                    method="POST"
-                    action={`/dashboard/resources/shared-to`}
-                    onsubmit="return confirm('Are you sure you want to remove this shared resource?');"
-                  >
-                    <input type="hidden" name="resource_id" value={item.id} />
-                    <button class="cursor-pointer" type="submit">
-                      <ICONS.delete class="w-5 h-5 fill-black" />
-                    </button>
-                  </Forms>
-                </td>
-              </tr>
-            ))
-          }
+          <template x-for="item in sharedTo">
+            <tr :key="item.id">
+              <td x-text="item.email"></td>
+              <td x-text="item.role"></td>
+              <td x-text="item.expired_at"></td>
+              <td x-text="item.next_rotation"></td>
+              <td>
+                <Forms
+                  method="POST"
+                  action={`/dashboard/resources/shared-to`}
+                  onsubmit="return confirm('Are you sure you want to remove this shared resource?');"
+                >
+                  <input type="hidden" name="resource_id" :value="item.id" />
+                  <button class="cursor-pointer" type="submit">
+                    <ICONS.delete class="w-5 h-5 fill-black" />
+                  </button>
+                </Forms>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>

@@ -210,15 +210,29 @@ const eligibleUsers = await db.all("SELECT * FROM eligible_users ");
           </select>
         </label>
       </div>
-      <button type="submit" class="btn btn-neutral w-full rounded-none">
-        Share
-      </button>
+      <div class="flex gap-4">
+        <button
+          class="btn btn-neutral btn-outline flex-1 rounded-none"
+          type="reset"
+          id="cancelAction">Cancel</button
+        >
+        <button class="btn btn-neutral flex-1 rounded-none" type="submit"
+          >Share</button
+        >
+      </div>
     </Forms>
   </div>
 </dialog>
 <script type="module" src="https://unpkg.com/cally"></script>
 <script is:inline>
   const form = document.querySelector("#share_resource form");
+
+  const cancelButton = document.getElementById("cancelAction");
+
+  cancelButton.addEventListener("click", () => {
+    window.formUtils.clearErrors(form);
+    document.getElementById("share_resource")?.close();
+  });
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();

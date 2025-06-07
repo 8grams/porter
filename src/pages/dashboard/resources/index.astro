@@ -20,7 +20,7 @@ if (type === "all_types") {
   if (search) {
     resources = await db.all(
       `SELECT * FROM resources WHERE name LIKE ? AND created_by = ?`,
-      [`%${search}%`, user?.email],
+      [`%${search}%`, user?.email]
     );
   } else {
     resources = await db.all(`SELECT * FROM resources WHERE created_by = ?`, [
@@ -31,12 +31,12 @@ if (type === "all_types") {
   if (search) {
     resources = await db.all(
       `SELECT * FROM resources WHERE type = ? AND name LIKE ? AND created_by = ?`,
-      [type, `%${search}%`, user?.email],
+      [type, `%${search}%`, user?.email]
     );
   } else {
     resources = await db.all(
       `SELECT * FROM resources WHERE type = ? AND created_by = ?`,
-      [type, user?.email],
+      [type, user?.email]
     );
   }
 }
@@ -261,7 +261,7 @@ const mappedResource = resources.map((r: any) => {
                         </div>
                       )}
                       {["mysql_access", "postgresql_access"].includes(
-                        resource.type,
+                        resource.type
                       ) && (
                         <div class="flex flex-col gap-3">
                           <div class="flex justify-between items-center gap-4">
@@ -274,14 +274,13 @@ const mappedResource = resources.map((r: any) => {
                       )}
                       <div class="flex items-center justify-between gap-4">
                         <p class="text-gray-700">Shared to:</p>
-                        <a
+                        <button
                           class="cursor-pointer flex items-center justify-end"
                           data-id={resource.id}
-                          href="#"
-                          @click.prevent="resourceId = $el.dataset.id; document.getElementById('shared_to').showModal(); const p=new URLSearchParams(window.location.search); p.delete('resourceId'); p.append('resourceId', resourceId); history.pushState({}, '', window.location.pathname + '?' + p.toString())"
+                          x-on:click="selectedResourceId = $el.dataset.id; document.getElementById('shared_to').showModal();"
                         >
                           <ICONS.users class="fill-black w-5 h-5" />
-                        </a>
+                        </button>
                       </div>
                     </div>
                   </div>
