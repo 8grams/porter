@@ -3,6 +3,7 @@ import Forms from "../../../components/Forms.astro";
 import { openDB } from "../../../utils/db";
 import getStringField from "../../../utils/field_cast";
 import { encrypt, decrypt } from "../../../utils/crypto";
+import formValidate from "../../../utils/formValidation";
 
 const { user } = Astro.locals;
 const db = await openDB();
@@ -15,6 +16,126 @@ if (Astro.request.method === "POST") {
   let query = "";
   let values: string[] = [];
 
+  const errors: Record<string, string> = {};
+
+  if (formValidate.notEmpty(type)) {
+    errors.type = "Tipe tidak boleh kosong";
+  }
+
+  if (type) {
+    if (
+      formValidate.notEmpty(getStringField(formData, "name")) ||
+      formValidate.hasAnySpace(getStringField(formData, "name"))
+    ) {
+      errors.name = "Nama tidak boleh kosong";
+    }
+    if (type === "aws_iam") {
+      if (
+        formValidate.notEmpty(getStringField(formData, "username")) ||
+        formValidate.hasAnySpace(getStringField(formData, "username"))
+      ) {
+        errors.username = "Access Key ID tidak boleh kosong / mengandung spasi";
+      }
+      if (
+        formValidate.notEmpty(getStringField(formData, "password")) ||
+        formValidate.hasAnySpace(getStringField(formData, "password"))
+      ) {
+        errors.password =
+          "Secret Access Key tidak boleh kosong / mengandung spasi";
+      }
+    } else if (type === "google_iam") {
+      if (
+        formValidate.notEmpty(getStringField(formData, "host")) ||
+        formValidate.hasAnySpace(getStringField(formData, "host"))
+      ) {
+        errors.host = "Project ID tidak boleh kosong / mengandung spasi";
+      }
+      if (
+        formValidate.notEmpty(getStringField(formData, "password")) ||
+        formValidate.hasAnySpace(getStringField(formData, "password"))
+      ) {
+        errors.password =
+          "Secret Access Key tidak boleh kosong / mengandung spasi";
+      }
+    }
+    if (type === "postgresql_access" || type === "mysql_access") {
+      if (
+        formValidate.customValidation(
+          getStringField(formData, "host"),
+          (el: string) => {
+            const rgx =
+              /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
+
+            if (el.trim() === "") return "Host tidak boleh kosong";
+            if (!rgx.test(el)) return "Format IP address tidak valid";
+
+            return "";
+          }
+        )
+      ) {
+        errors.host = "Host tidak valid";
+      }
+      if (
+        formValidate.notEmpty(getStringField(formData, "username")) ||
+        formValidate.hasAnySpace(getStringField(formData, "username"))
+      ) {
+        errors.username = "Username tidak boleh kosong / mengandung spasi";
+      }
+      if (
+        formValidate.notEmpty(getStringField(formData, "password")) ||
+        formValidate.hasAnySpace(getStringField(formData, "password"))
+      ) {
+        errors.password = "Password tidak boleh kosong / mengandung spasi";
+      }
+    }
+    if (type === "vm") {
+      if (
+        formValidate.customValidation(
+          getStringField(formData, "host"),
+          (el: string) => {
+            const rgx =
+              /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
+
+            if (el.trim() === "") return "Host tidak boleh kosong";
+            if (!rgx.test(el)) return "Format IP address tidak valid";
+
+            return "";
+          }
+        )
+      ) {
+        errors.host = "Host tidak valid";
+      }
+      if (
+        formValidate.notEmpty(getStringField(formData, "username")) ||
+        formValidate.hasAnySpace(getStringField(formData, "username"))
+      ) {
+        errors.username = "Username tidak boleh kosong / mengandung spasi";
+      }
+      if (
+        formValidate.notEmpty(getStringField(formData, "password")) ||
+        formValidate.hasAnySpace(getStringField(formData, "password")) ||
+        formValidate.sshValidation(getStringField(formData, "password"))
+      ) {
+        errors.password =
+          "SSH Key tidak boleh kosong / mengandung spasi / tidak valid";
+      }
+    } else {
+      if (
+        formValidate.notEmpty(getStringField(formData, "password")) ||
+        formValidate.hasAnySpace(getStringField(formData, "password"))
+      ) {
+        errors.password = "Kubeconfig tidak boleh kosong";
+      }
+    }
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return new Response(JSON.stringify({ success: false, errors }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   if (type === "aws_iam") {
     values = [
       type,
@@ -24,10 +145,12 @@ if (Astro.request.method === "POST") {
       user?.email as string,
     ];
     if (isUpdate) {
-      query = "UPDATE resources SET type = ?, name = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
+      query =
+        "UPDATE resources SET type = ?, name = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
       values.push(id);
     } else {
-      query = "INSERT INTO resources (type, name, username, password, created_by) VALUES (?, ?, ?, ?, ?)";
+      query =
+        "INSERT INTO resources (type, name, username, password, created_by) VALUES (?, ?, ?, ?, ?)";
     }
   } else if (type === "google_iam") {
     values = [
@@ -38,10 +161,12 @@ if (Astro.request.method === "POST") {
       user?.email as string,
     ];
     if (isUpdate) {
-      query = "UPDATE resources SET type = ?, name = ?, host = ?, password = ?, created_by = ? WHERE id = ?";
+      query =
+        "UPDATE resources SET type = ?, name = ?, host = ?, password = ?, created_by = ? WHERE id = ?";
       values.push(id);
     } else {
-      query = "INSERT INTO resources (type, name, host, password, created_by) VALUES (?, ?, ?, ?, ?)";
+      query =
+        "INSERT INTO resources (type, name, host, password, created_by) VALUES (?, ?, ?, ?, ?)";
     }
   } else if (type === "postgresql_access" || type === "mysql_access") {
     values = [
@@ -53,24 +178,29 @@ if (Astro.request.method === "POST") {
       user?.email as string,
     ];
     if (isUpdate) {
-      query = "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
+      query =
+        "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
       values.push(id);
     } else {
-      query = "INSERT INTO resources (type, name, host, username, password, created_by) VALUES (?, ?, ?, ?, ?, ?)";
+      query =
+        "INSERT INTO resources (type, name, host, username, password, created_by) VALUES (?, ?, ?, ?, ?, ?)";
     }
   } else if (type === "vm") {
     values = [
       type,
       getStringField(formData, "name"),
       getStringField(formData, "host"),
+      encrypt(getStringField(formData, "username")),
       encrypt(getStringField(formData, "password")),
       user?.email as string,
     ];
     if (isUpdate) {
-      query = "UPDATE resources SET type = ?, name = ?, host = ?, password = ?, created_by = ? WHERE id = ?";
+      query =
+        "UPDATE resources SET type = ?, name = ?, host = ?, username = ?, password = ?, created_by = ? WHERE id = ?";
       values.push(id);
     } else {
-      query = "INSERT INTO resources (type, name, host, password, created_by) VALUES (?, ?, ?, ?, ?)";
+      query =
+        "INSERT INTO resources (type, name, host, username, password, created_by) VALUES (?, ?, ?, ?, ?, ?)";
     }
   } else {
     values = [
@@ -80,30 +210,38 @@ if (Astro.request.method === "POST") {
       user?.email as string,
     ];
     if (isUpdate) {
-      query = "UPDATE resources SET type = ?, name = ?, password = ?, created_by = ? WHERE id = ?";
+      query =
+        "UPDATE resources SET type = ?, name = ?, password = ?, created_by = ? WHERE id = ?";
       values.push(id);
     } else {
-      query = "INSERT INTO resources (type, name, password, created_by) VALUES (?, ?, ?, ?)";
+      query =
+        "INSERT INTO resources (type, name, password, created_by) VALUES (?, ?, ?, ?)";
     }
   }
   await db.run(query, values);
-  return Astro.redirect("/dashboard/resources");
+  return new Response(
+    JSON.stringify({
+      success: true,
+      redirect: "/dashboard/resources",
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
 ---
 
 <dialog slot="dialog" class="modal" id="modal_resources">
   <div class="modal-box">
-    <form method="dialog">
-      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-        >✕</button
-      >
-    </form>
     <Forms
       class="flex flex-col gap-6"
       method="POST"
       action="/dashboard/resources/modal-resources"
       x-data="formHandler()"
       x-effect="syncResource(selectedResource)"
+      id="form_resources"
+      @submit.prevent="submitResource"
     >
       <div class="flex flex-col gap-4">
         <h1
@@ -113,7 +251,6 @@ if (Astro.request.method === "POST") {
         </h1>
         <input type="hidden" name="id" :value="selectedResource?.id" />
         <label>
-          <input type="hidden" name="type" :value="category_name" />
           <select
             class="select
           rounded-none
@@ -128,6 +265,7 @@ if (Astro.request.method === "POST") {
             <option value="postgresql_access">PostgreSQL Access</option>
             <option value="mysql_access">MySQL Access</option>
           </select>
+          <input type="hidden" name="type" :value="category_name" />
         </label>
         <div class="flex flex-col gap-6">
           <template x-if="category_name !== ''">
@@ -160,8 +298,7 @@ if (Astro.request.method === "POST") {
                   name="password"
                   required
                   placeholder="Secret Access Key"
-                  :value="selectedResource?.password || ''"
-                  ></textarea>
+                  :value="selectedResource?.password || ''"></textarea>
               </label>
             </div>
           </template>
@@ -183,9 +320,7 @@ if (Astro.request.method === "POST") {
                   name="password"
                   required
                   placeholder="Service Account Key"
-                  :value="selectedResource?.password || ''"
-                  ></textarea
-                >
+                  :value="selectedResource?.password || ''"></textarea>
               </label>
             </div>
           </template>
@@ -217,9 +352,7 @@ if (Astro.request.method === "POST") {
                   name="password"
                   required
                   placeholder="SSH Key"
-                  :value="selectedResource?.password || ''"
-                  ></textarea
-                >
+                  :value="selectedResource?.password || ''"></textarea>
               </label>
             </div>
           </template>
@@ -230,9 +363,7 @@ if (Astro.request.method === "POST") {
                 name="password"
                 required
                 placeholder="Kubeconfig"
-                :value="selectedResource?.password || ''"
-                ></textarea
-              >
+                :value="selectedResource?.password || ''"></textarea>
             </label>
           </template>
           <template
@@ -289,8 +420,9 @@ if (Astro.request.method === "POST") {
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"
+                    ></path>
+                    <circle cx="12" cy="12" r="3"></circle>
                   </svg>
                   <svg
                     x-show="show"
@@ -303,10 +435,14 @@ if (Astro.request.method === "POST") {
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
-                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
-                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
-                    <line x1="2" x2="22" y1="2" y2="22"/>
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path>
+                    <path
+                      d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"
+                    ></path>
+                    <path
+                      d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"
+                    ></path>
+                    <line x1="2" x2="22" y1="2" y2="22"></line>
                   </svg>
                 </button>
               </label>
@@ -314,24 +450,35 @@ if (Astro.request.method === "POST") {
           </template>
         </div>
       </div>
-      <button type="submit" class="btn btn-neutral rounded-none w-full">
-        Save
-      </button>
-      <template x-if="category_name === 'postgresql_access' || category_name === 'mysql_access'">
+      <div class="flex gap-4">
+        <button
+          class="btn btn-neutral btn-outline flex-1 rounded-none"
+          type="reset"
+          id="cancelAction"
+          @click="cancelButton()">Cancel</button
+        >
+        <button class="btn btn-neutral flex-1 rounded-none" type="submit"
+          >Save</button
+        >
+      </div>
+      <template
+        x-if="category_name === 'postgresql_access' || category_name === 'mysql_access'"
+      >
         <div class="flex flex-col gap-2">
-          <button 
-            type="button" 
+          <button
+            type="button"
             class="btn btn-outline rounded-none w-full"
             @click="checkConnection()"
           >
             Test Connection
           </button>
-          <div 
-            x-show="connectionResult" 
+          <div
+            x-show="connectionResult"
             x-text="connectionResult?.message || ''"
             :class="connectionResult?.success ? 'text-success' : 'text-error'"
             class="text-sm p-2 rounded"
-          ></div>
+          >
+          </div>
         </div>
       </template>
     </Forms>
@@ -340,7 +487,7 @@ if (Astro.request.method === "POST") {
 <script slot="script" is:inline>
   function formHandler() {
     return {
-      category_name: '',
+      category_name: "",
       connectionResult: null,
       titles: {
         aws_iam: "AWS IAM",
@@ -354,39 +501,72 @@ if (Astro.request.method === "POST") {
         if (selectedResource) {
           this.category_name = selectedResource?.type;
         } else {
-          this.category_name = '';
+          this.category_name = "";
         }
       },
       async checkConnection() {
         const host = document.querySelector('input[name="host"]').value;
         const username = document.querySelector('input[name="username"]').value;
         const password = document.querySelector('input[name="password"]').value;
-        
+
         if (!host || !username || !password) {
           this.connectionResult = {
             success: false,
-            message: 'Please fill in all required fields'
+            message: "Please fill in all required fields",
           };
           return;
         }
 
         try {
-          const type = this.category_name === 'postgresql_access' ? 'postgres' : 'mysql';
-          const response = await fetch('/api/test-connection', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type, host, username, password })
+          const type =
+            this.category_name === "postgresql_access" ? "postgres" : "mysql";
+          const response = await fetch("/api/test-connection", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type, host, username, password }),
           });
-          
+
           const result = await response.json();
           this.connectionResult = result;
         } catch (error) {
           this.connectionResult = {
             success: false,
-            message: 'Failed to test connection: ' + error.message
+            message: "Failed to test connection: " + error.message,
           };
         }
-      }
+      },
+      async submitResource() {
+        const form = document.getElementById("form_resources");
+        const data = new FormData(form);
+
+        window.formUtils.clearErrors(form);
+
+        try {
+          const res = await fetch(form.action, {
+            method: "POST",
+            body: data,
+          });
+          const result = await res.json();
+          if (!res.ok) {
+            if (result.errors) {
+              for (const [field, msg] of Object.entries(result.errors)) {
+                window.formUtils.showError(form, field, msg);
+              }
+            } else {
+              alert("Terjadi kesalahan");
+            }
+          } else if (result.success) {
+            window.location.href = result.redirect;
+          }
+        } catch (error) {
+          alert("Error jaringan, coba lagi");
+        }
+      },
+      cancelButton() {
+        const form = document.getElementById("form_resources");
+        window.formUtils.clearErrors(form);
+        document.getElementById("modal_resources")?.close();
+      },
     };
   }
 </script>
